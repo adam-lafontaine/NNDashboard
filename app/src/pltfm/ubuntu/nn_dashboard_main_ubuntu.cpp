@@ -40,8 +40,8 @@ namespace
 
     constexpr u32 N_TEXTURES = 1;
 
-    dx11::Context dx_ctx;    
-    dx11::TextureList<N_TEXTURES> textures;
+    SDL_GLContext gl_context;
+    ogl::TextureList<N_TEXTURES> textures;
 }
 
 
@@ -59,31 +59,6 @@ static bool is_running()
 
 static void handle_window_event(SDL_Event const& event, SDL_Window* window)
 {
-    auto const window_resize = [&]()
-    {
-        if (event.window.windowID == SDL_GetWindowID(window))
-        {
-            return;
-        }
-
-        // TODO
-        int w, h;
-        SDL_GetWindowSize(window, &w, &h);
-
-        // Release all outstanding references to the swap chain's buffers before resizing.
-        dx11::cleanup_render_target(dx_ctx);
-        dx_ctx.pSwapChain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        dx11::create_render_target(dx_ctx);
-    };
-
-    auto const window_close = [&]()
-    {
-        if (event.window.windowID == SDL_GetWindowID(window))
-        {
-            end_program();
-        }
-    };
-
     switch (event.type)
     {
     case SDL_QUIT:
@@ -95,12 +70,14 @@ static void handle_window_event(SDL_Event const& event, SDL_Window* window)
         switch (event.window.event)
         {
         case SDL_WINDOWEVENT_SIZE_CHANGED:
-        case SDL_WINDOWEVENT_RESIZED:
-            window_resize();
+        //case SDL_WINDOWEVENT_RESIZED:
+            int w, h;
+            SDL_GetWindowSize(window, &w, &h);
+            glViewport(0, 0, w, h);
             break;
 
         case SDL_WINDOWEVENT_CLOSE:
-            window_close();
+            end_program();
             break;
         
         default:
@@ -146,8 +123,7 @@ static void process_user_input()
 
 static void render_imgui_frame()
 {
-    // Start the Dear ImGui frame
-    ImGui_ImplDX11_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
@@ -159,9 +135,8 @@ static void render_imgui_frame()
 #endif
 
     ImGui::Render();
-
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    dx11::render(dx_ctx, clear_color);    
+    
+    ogl::render(window, gl_context);        
 }
 
 
@@ -182,14 +157,7 @@ static bool main_init()
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
 
-    auto df = 0.9f;
-    auto dw = (int)(df * dm.w);
-    auto dh = (int)(df * dm.h);
-
-    //auto dw = dm.w;
-    //auto dh = dm.h;
-
-    window = ui::create_sdl_dx11_window("Camera", dw, dh);
+    window = ui::create_sdl_ogl_window("Camera", dm.w, dm.h);    
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");
@@ -197,51 +165,44 @@ static bool main_init()
         return false;
     }
 
-    set_game_window_icon(window);
+    set_game_window_icon(window);    
 
-    SDL_SysWMinfo wmInfo;
-    SDL_VERSION(&wmInfo.version);
-    SDL_GetWindowWMInfo(window, &wmInfo);
-    HWND hwnd = (HWND)wmInfo.info.win.window;
-
-    // Initialize Direct3D
-    if (!dx11::init_context(dx_ctx, hwnd))
-    {
-        dx11::close_context(dx_ctx);
-        return false;
-    }
+    gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;    
 
     // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForD3D(window);
-    ImGui_ImplDX11_Init(dx_ctx.pd3dDevice, dx_ctx.pd3dDeviceContext);
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init(ogl::get_glsl_version());
 
     ui::set_imgui_style();
-    ui_state.io = &io;
 
-    textures = dx11::create_textures<N_TEXTURES>();
+    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+
+    textures = ogl::create_textures<N_TEXTURES>();
+    
+    ui_state.io = &io;
 
     return true;
 }
 
 
 static void main_close()
-{
-    // Cleanup
-    ImGui_ImplDX11_Shutdown();
+{     
+    ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
-
-    dx11::close_context(dx_ctx);
+    SDL_GL_DeleteContext(gl_context);
 
     SDL_DestroyWindow(window);
     sdl::close();
@@ -253,7 +214,9 @@ static void main_loop()
     while(is_running())
     {
         process_user_input();
-        render_imgui_frame(); 
+        //ogl::render_texture(textures.get(camera_texture_id));
+
+        render_imgui_frame();
     }
 }
 
@@ -267,7 +230,10 @@ int main()
 
     run_state = RunState::Run;
 
-    main_loop();
+    while (is_running())
+    {
+        main_loop();
+    }
 
     main_close();
 
