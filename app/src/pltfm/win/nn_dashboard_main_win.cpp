@@ -1,6 +1,6 @@
 #include "imgui_include.hpp"
-#include "../../mlai/mlai.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
+#include "../../display/display.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)
@@ -43,7 +43,7 @@ namespace
     dx11::Context dx_ctx;    
     dx11::TextureList<N_TEXTURES> textures;
 
-    mlai::AI_State ai_state{};
+    display::DisplayState display_state;
 
     #define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
 
@@ -169,6 +169,8 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
+    display::status_window(display_state);
+
     ImGui::Render();
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -252,7 +254,7 @@ static bool main_init()
         return false;
     }
 
-
+    display_state.ai_files = ai_files;
 
     return true;
 }
@@ -260,8 +262,8 @@ static bool main_init()
 
 static void main_close()
 {
-    mlai::destroy_data(ai_state);
-    
+    display::destroy(display_state);
+
     // Cleanup
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplSDL2_Shutdown();
@@ -278,7 +280,7 @@ static void main_loop()
 {    
     while(is_running())
     {
-        process_user_input();
+        process_user_input();        
         render_imgui_frame(); 
     }
 }

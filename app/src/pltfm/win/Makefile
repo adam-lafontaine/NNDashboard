@@ -107,6 +107,19 @@ span_c += $(span_h)
 #************
 
 
+#*** image ***
+
+image := $(libs)/image
+
+image_h := $(image)/image.hpp
+image_h += $(span_h)
+
+image_c := $(image)/image.cpp
+image_c += $(image_h)
+
+#*************
+
+
 #*** sdl ***
 
 sdl := $(libs)/sdl
@@ -136,6 +149,17 @@ mlai_c := $(mlai)/mlai.cpp
 #************
 
 
+#*** display ***
+
+display := $(src)/display
+
+display_h := $(display)/display.hpp
+display_h += $(image_h)
+display_h += $(mlai_h)
+
+#*************
+
+
 #*** main cpp ***
 
 main_c := $(pltfm)/nn_dashboard_main_win.cpp
@@ -143,11 +167,12 @@ main_o := $(build)/main.o
 obj    := $(main_o)
 
 main_dep := $(imgui_include_h)
-main_dep += $(mlai_h)
+main_dep += $(display_h)
 main_dep += $(sdl_include_h)
 
 # main_o.cpp
 main_dep += $(mlai_c)
+main_dep += $(image_c)
 main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)

@@ -2,6 +2,8 @@
 
 #include "image.hpp"
 
+namespace sp = span;
+
 
 namespace image
 {
@@ -78,5 +80,21 @@ namespace image
         }
 
         return view;
+    }
+}
+
+
+/* fill */
+
+namespace image
+{
+    void fill(SubView const& view, Pixel color)
+    {
+        assert(view.matrix_data_);
+
+        for (u32 y = 0; y < view.height; y++)
+        {
+            sp::fill_span_32(row_span(view, y), color);
+        }
     }
 }

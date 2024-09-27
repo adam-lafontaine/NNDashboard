@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../util/memory_buffer.hpp"
+#include "../span/span.hpp"
 
 namespace mb = memory_buffer;
 
@@ -45,6 +45,28 @@ namespace image
 
         return image;
     }
+}
+
+
+namespace image
+{
+    template <typename T>
+    class MatrixSubView2D
+    {
+    public:
+        T*  matrix_data_;
+        u32 matrix_width;
+
+        u32 x_begin;
+        u32 y_begin;
+
+        u32 width;
+        u32 height;
+    };
+
+
+    using SubView = MatrixSubView2D<Pixel>;    
+    using GraySubView = MatrixSubView2D<u8>;
 }
 
 
@@ -135,6 +157,106 @@ namespace image
 }
 
 
+/* row_begin */
+
+namespace image
+{
+    template <typename T>
+    static inline T* row_begin(MatrixView2D<T> const& view, u32 y)
+    {
+        return view.matrix_data_ + (u64)y * view.width;
+    }
+
+
+    template <typename T>
+    static inline T* row_begin(MatrixSubView2D<T> const& view, u32 y)
+    {
+        return view.matrix_data_ + (u64)(view.y_begin + y) * view.matrix_width + view.x_begin;
+    }
+}/* xy_at */
+
+namespace image
+{
+    template <typename T>
+    static inline T* xy_at(MatrixView2D<T> const& view, u32 x, u32 y)
+    {
+        return row_begin(view, y) + x;
+    }
+
+
+    template <typename T>
+    static inline T* xy_at(MatrixSubView2D<T> const& view, u32 x, u32 y)
+    {
+        return row_begin(view, y) + x;
+    }
+}
+
+
+/* row_span */
+
+namespace image
+{
+    template <typename T>
+	static inline SpanView<T> row_span(MatrixView2D<T> const& view, u32 y)
+	{
+        SpanView<T> span{};
+
+        span.data = view.matrix_data_ + (u64)y * view.width;
+        span.length = view.width;
+
+        return span;
+	}
+
+
+    template <typename T>
+    static inline SpanView<T> row_span(MatrixSubView2D<T> const& view, u32 y)
+    {
+        SpanView<T> span{};
+
+        span.data = view.matrix_data_ + (u64)(view.y_begin + y) * view.matrix_width + view.x_begin;
+        span.length = view.width;
+
+        return span;
+    }
+
+
+    template <typename T>
+    static inline SpanView<T> to_span(MatrixView2D<T> const& view)
+    {
+        SpanView<T> span{};
+
+        span.data = view.matrix_data_;
+        span.length = view.width * view.height;
+
+        return span;
+    }
+
+
+    template <typename T>
+    static inline SpanView<T> sub_span(MatrixView2D<T> const& view, u32 y, u32 x_begin, u32 x_end)
+    {
+        SpanView<T> span{};
+
+        span.data = view.matrix_data_ + (u64)(y * view.width) + x_begin;
+        span.length = x_end - x_begin;
+
+        return span;
+    }
+
+
+    template <typename T>
+    static inline SpanView<T> sub_span(MatrixSubView2D<T> const& view, u32 y, u32 x_begin, u32 x_end)
+    {
+        SpanView<T> span{};
+
+        span.data = view.matrix_data_ + (u64)((view.y_begin + y) * view.matrix_width + view.x_begin) + x_begin;
+        span.length = x_end - x_begin;
+
+        return span;
+    }
+}
+
+
 /* make_view */
 
 namespace image
@@ -144,4 +266,59 @@ namespace image
     ImageView make_view(u32 width, u32 height, Buffer32& buffer);
 
     GrayView make_view(u32 width, u32 height, Buffer8& buffer);
+}
+
+
+/* sub_view */
+
+namespace image
+{
+    template <typename T>
+    inline MatrixSubView2D<T> sub_view(MatrixView2D<T> const& view, Rect2Du32 const& range)
+    {
+        MatrixSubView2D<T> sub_view{};
+
+        sub_view.matrix_data_ = view.matrix_data_;
+        sub_view.matrix_width = view.width;
+        sub_view.x_begin = range.x_begin;
+        sub_view.y_begin = range.y_begin;
+        sub_view.width = range.x_end - range.x_begin;
+        sub_view.height = range.y_end - range.y_begin;
+
+        return sub_view;
+    }
+
+
+    template <typename T>
+    inline MatrixSubView2D<T> sub_view(MatrixSubView2D<T> const& view, Rect2Du32 const& range)
+    {
+        MatrixSubView2D<T> sub_view{};
+
+        sub_view.matrix_data_ = view.matrix_data_;
+        sub_view.matrix_width = view.matrix_width;
+
+        sub_view.x_begin = range.x_begin + view.x_begin;
+		sub_view.y_begin = range.y_begin + view.y_begin;
+
+		sub_view.width = range.x_end - range.x_begin;
+		sub_view.height = range.y_end - range.y_begin;
+
+        return sub_view;
+    }
+
+
+    template <typename T>
+    inline MatrixSubView2D<T> sub_view(MatrixView2D<T> const& view)
+    {
+        auto range = make_range(view.width, view.height);
+        return sub_view(view, range);
+    }
+}
+
+
+/* fill */
+
+namespace image
+{
+    void fill(SubView const& view, Pixel color);
 }
