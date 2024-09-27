@@ -1,3 +1,5 @@
+#pragma once
+
 #include "mnist.hpp"
 
 #include <fstream>
@@ -171,5 +173,16 @@ namespace mnist
         }
 
         return span;
+    }
+
+
+    img::GrayView image_at(ImageData const& data, u32 index)
+    {
+        auto offset = index * data.image_width * data.image_height;
+
+        img::GrayView view{};
+        view.width = data.image_width;
+        view.height = data.image_height;
+        view.matrix_data_ = data.pixel_buffer.data_ + offset;
     }
 }

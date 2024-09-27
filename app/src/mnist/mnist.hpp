@@ -1,4 +1,9 @@
-#include "../../libs/span/span.hpp"
+#pragma once
+
+#include "../../../libs/image/image.hpp"
+#include "../../../libs/span/span.hpp"
+
+namespace img = image;
 
 
 namespace mnist
@@ -43,4 +48,5 @@ namespace mnist
     SpanView<f32> output_at(LabelData const& data, u32 index);
 
 
+    img::GrayView image_at(ImageData const& data, u32 index);
 }

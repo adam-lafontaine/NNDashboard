@@ -118,6 +118,16 @@ sdl_include_h := $(sdl)/sdl_include.hpp
 #**********
 
 
+#*** mnist ***
+
+mnist := $(src)/mnist
+
+mnist_h := $(mnist)/mnist.hpp
+mnist_c := $(mnist)/mnist.cpp
+
+#************
+
+
 #*** main cpp ***
 
 main_c := $(pltfm)/nn_dashboard_main_win.cpp
@@ -128,9 +138,9 @@ main_dep := $(imgui_include_h)
 main_dep += $(sdl_include_h)
 
 # main_o.cpp
+main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)
-
 
 #****************
 
