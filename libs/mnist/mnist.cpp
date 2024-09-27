@@ -142,6 +142,20 @@ namespace mnist
     }
 
 
+    void destroy_data(ImageData& data)
+    {
+        mb::destroy_buffer(data.pixel_buffer);
+        mb::destroy_buffer(data.input_buffer);
+    }
+
+
+    void destroy_data(LabelData& data)
+    {
+        mb::destroy_buffer(data.label_buffer);
+        mb::destroy_buffer(data.output_buffer);
+    }
+
+
     SpanView<f32> input_at(ImageData const& data, u32 index)
     {
         auto span = span::make_view(data.input_buffer);
@@ -184,5 +198,7 @@ namespace mnist
         view.width = data.image_width;
         view.height = data.image_height;
         view.matrix_data_ = data.pixel_buffer.data_ + offset;
+
+        return view;
     }
 }

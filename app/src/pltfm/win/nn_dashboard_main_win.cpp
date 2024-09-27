@@ -1,6 +1,6 @@
 #include "imgui_include.hpp"
+#include "../../mlai/mlai.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
-#include "../../../../libs/util/types.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)
@@ -42,6 +42,17 @@ namespace
 
     dx11::Context dx_ctx;    
     dx11::TextureList<N_TEXTURES> textures;
+
+    mlai::AI_State ai_state{};
+
+    #define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
+
+    constexpr mlai::DataFiles ai_files = {
+        ROOT "train-images.idx3-ubyte",
+        ROOT "t10k-images.idx3-ubyte",
+        ROOT "train-labels.idx1-ubyte",
+        ROOT "t10k-labels.idx1-ubyte"
+    };
 }
 
 
@@ -165,7 +176,7 @@ static void render_imgui_frame()
 }
 
 
-static bool main_init()
+static bool ui_init()
 {
     if(!sdl::init())
     {       
@@ -189,7 +200,7 @@ static bool main_init()
     //auto dw = dm.w;
     //auto dh = dm.h;
 
-    window = ui::create_sdl_dx11_window("Camera", dw, dh);
+    window = ui::create_sdl_dx11_window("Machine Learning", dw, dh);
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");
@@ -234,8 +245,23 @@ static bool main_init()
 }
 
 
+static bool main_init()
+{
+    if (!ui_init())
+    {
+        return false;
+    }
+
+
+
+    return true;
+}
+
+
 static void main_close()
 {
+    mlai::destroy_data(ai_state);
+    
     // Cleanup
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplSDL2_Shutdown();

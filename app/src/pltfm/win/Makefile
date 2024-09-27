@@ -46,16 +46,6 @@ exe := nn_dashboard.exe
 program_exe := $(build)/$(exe)
 
 
-#*** libs ***
-
-alloc_type := $(libs)/alloc_type
-span       := $(libs)/span
-util       := $(libs)/util
-sdl        := $(libs)/sdl
-
-#************
-
-
 #*** imgui ***
 
 imgui := $(pltfm)
@@ -69,6 +59,8 @@ imgui_include_h += $(imgui_options_h)
 
 #*** libs/util ***
 
+util := $(libs)/util
+
 types_h        := $(util)/types.hpp
 stopwatch_h    := $(util)/stopwatch.hpp
 stack_buffer_h := $(util)/stack_buffer.hpp
@@ -80,6 +72,8 @@ numeric_h += $(types_h)
 
 
 #*** alloc_type ***
+
+alloc_type := $(libs)/alloc_type
 
 alloc_type_h := $(alloc_type)/alloc_type.hpp
 alloc_type_h += $(types_h)
@@ -100,6 +94,8 @@ memory_buffer_h += $(alloc_type_h)
 
 #*** span ***
 
+span := $(libs)/span
+
 span_h := $(span)/span.hpp
 span_h += $(memory_buffer_h)
 span_h += $(stack_buffer_h)
@@ -113,6 +109,8 @@ span_c += $(span_h)
 
 #*** sdl ***
 
+sdl := $(libs)/sdl
+
 sdl_include_h := $(sdl)/sdl_include.hpp
 
 #**********
@@ -120,10 +118,20 @@ sdl_include_h := $(sdl)/sdl_include.hpp
 
 #*** mnist ***
 
-mnist := $(src)/mnist
+mnist := $(libs)/mnist
 
 mnist_h := $(mnist)/mnist.hpp
 mnist_c := $(mnist)/mnist.cpp
+
+#************
+
+
+#*** mlai ***
+
+mlai := $(src)/mlai
+
+mlai_h := $(mlai)/mlai.hpp
+mlai_c := $(mlai)/mlai.cpp
 
 #************
 
@@ -135,9 +143,11 @@ main_o := $(build)/main.o
 obj    := $(main_o)
 
 main_dep := $(imgui_include_h)
+main_dep += $(mlai_h)
 main_dep += $(sdl_include_h)
 
 # main_o.cpp
+main_dep += $(mlai_c)
 main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)

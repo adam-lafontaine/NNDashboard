@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../libs/image/image.hpp"
-#include "../../../libs/span/span.hpp"
+#include "../image/image.hpp"
+#include "../span/span.hpp"
 
 namespace img = image;
 
@@ -41,6 +41,11 @@ namespace mnist
     ImageData load_image_data(cstr filepath);
 
     LabelData load_label_data(cstr filepath);
+
+
+    void destroy_data(ImageData& data);
+
+    void destroy_data(LabelData& data);
 
 
     SpanView<f32> input_at(ImageData const& data, u32 index);
