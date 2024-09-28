@@ -1,18 +1,23 @@
 #pragma once
 
-//#include "../../../libs/imgui/imgui.h"
+#include "../../../libs/imgui/imgui.h"
 #include "../../../libs/image/image.hpp"
+#include "../../../libs/util/numeric.hpp"
 #include "../mlai/mlai.hpp"
 
 #include <cassert>
 #include <thread>
-//#include <functional>
+#include <functional>
 
 namespace img = image;
+namespace num = numeric;
 
 
 namespace display
 {
+    using texture_f = std::function<ImTextureID(img::Image const&)>;
+
+
     enum class LoadStatus : u8
     {
         NotLoaded = 0,
@@ -28,22 +33,35 @@ namespace display
 
         LoadStatus ai_load_status = LoadStatus::NotLoaded;
 
-        mlai::DataFiles ai_files;
-
         mlai::AI_State ai_state{};
 
-        img::ImageView input_view;
-        void* input_texture = 0;
+        img::Image input_image;
+        img::SubView input_view;
+        ImTextureID input_texture = 0;
 
-        img::Buffer32 pixel_data;
+        mlai::DataFiles ai_files;
+        texture_f to_texture = [](auto v){ return (ImTextureID)0; };
     };
 
 
     inline void destroy(DisplayState& state)
     {
         mlai::destroy_data(state.ai_state);
+        img::destroy_image(state.input_image);
+    }
 
-        mb::destroy_buffer(state.pixel_data);
+
+    inline bool init(DisplayState& state)
+    {
+        u32 display_width = 480;
+        u32 display_height = 320;
+
+        if (!img::create_image(state.input_image, display_width, display_height))
+        {
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -53,6 +71,45 @@ namespace display
 {
 namespace internal
 {
+    static bool create_input_display(DisplayState& state)
+    {
+        state.input_texture = state.to_texture(state.input_image);
+
+        if (!state.input_texture)
+        {
+            return false;
+        }
+
+        auto wd = state.ai_state.test_data.image_width; // 17
+        auto hd = state.ai_state.test_data.image_height; // 11
+
+        auto wi = state.input_image.width;
+        auto hi = state.input_image.height;
+
+        if (wi < wd || hi < hd)
+        {
+            return false;
+        }
+
+        auto scale = num::min(wi / wd, hi / hd);
+
+        auto w = wd * scale;
+        auto h = hd * scale;
+
+        Rect2Du32 r{};
+        r.x_begin = (wi - w) / 2;
+        r.x_end = r.x_begin + w;
+        r.y_begin = (hi - h) / 2;
+        r.y_end = r.y_begin + h;
+
+        auto view = img::make_view(state.input_image);
+        img::fill(view, img::to_pixel(0));
+
+        state.input_view = img::sub_view(view, r);
+
+        return true;
+    }
+
     static void load_ai_data_async(DisplayState& state)
     {
         using LS = LoadStatus;
@@ -61,8 +118,7 @@ namespace internal
         {
             state.ai_load_status = LS::InProgress;
             auto ok = mlai::load_data(state.ai_state, state.ai_files);
-
-
+            ok &= create_input_display(state);
 
             state.ai_load_status = ok ? LS::Loaded : LS::Fail;
         };
@@ -72,7 +128,7 @@ namespace internal
     }
 
 
-    static void scale_view(img::GrayView const& src, img::ImageView const& dst)
+    static void scale_view(img::GrayView const& src, img::SubView const& dst)
     {
         assert(dst.width % src.width == 0);
         assert(dst.height % src.height == 0);
@@ -86,7 +142,7 @@ namespace internal
         for (u32 y = 0; y < src.height; y++)
         {
             auto row = img::row_begin(src, y);
-            for (u32 x = 0; x < src.width; y++)
+            for (u32 x = 0; x < src.width; x++)
             {
                 auto gray = row[x];
                 sub = img::sub_view(dst, rect);
@@ -134,33 +190,9 @@ namespace display
 
         ImGui::Begin("Status");
 
-        if (state.ai_load_status == LS::NotLoaded)
+        if (ImGui::Button("Load Data") && state.ai_load_status == LS::NotLoaded)
         {
-            if (ImGui::Button("Load Data"))
-            {
-                internal::load_ai_data_async(state);
-            }
-            else
-            {
-                cstr msg = "NA";
-
-                switch (state.ai_load_status)
-                {
-                case LS::NotLoaded:
-                    msg = "NA";
-                    break;
-                
-                case LS::InProgress:
-                    msg = "Loading...";
-                    break;
-                
-                default:
-                    msg = "Error";
-                    break;
-                }
-
-                ImGui::Text(msg);
-            }
+            internal::load_ai_data_async(state);            
         }
 
         ImGui::BeginGroup();
@@ -191,23 +223,21 @@ namespace display
     
     inline void input_image_window(DisplayState& state)
     {
-        if (state.ai_load_status != LoadStatus::Loaded)
-        {
-            return;
-        }
-
         u32 image_id = 4;
         f32 scale = 1.0f;
 
         auto& view = state.input_view;
 
-        auto src_data = state.ai_state.train_data;
-        auto src_gray = mnist::image_at(src_data, image_id);
+        auto w = state.input_image.width;
+        auto h = state.input_image.height;
 
-        internal::scale_view(src_gray, state.input_view);
+        if (state.ai_load_status == LoadStatus::Loaded)
+        {
+            auto src_data = state.ai_state.train_data;
+            auto src_gray = mnist::image_at(src_data, image_id);
 
-        auto w = view.width * scale;
-        auto h = view.height * scale;
+            internal::scale_view(src_gray, view);
+        }        
 
         ImGui::Begin("Input Image");
 

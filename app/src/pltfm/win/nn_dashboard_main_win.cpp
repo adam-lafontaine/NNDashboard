@@ -39,6 +39,7 @@ namespace
     RunState run_state = RunState::Begin;
 
     constexpr u32 N_TEXTURES = 1;
+    constexpr dx11::TextureId input_image_texture_id = { 0 };
 
     dx11::Context dx_ctx;    
     dx11::TextureList<N_TEXTURES> textures;
@@ -170,6 +171,7 @@ static void render_imgui_frame()
 #endif
 
     display::status_window(display_state);
+    display::input_image_window(display_state);
 
     ImGui::Render();
 
@@ -256,6 +258,17 @@ static bool main_init()
 
     display_state.ai_files = ai_files;
 
+    display_state.to_texture = [](img::Image const& src)
+    {
+        dx11::init_texture(src.data_, src.width, src.height, textures.get(input_image_texture_id), dx_ctx);
+        return textures.get_imgui_texture(input_image_texture_id);
+    };
+
+    if (!display::init(display_state))
+    {
+        return false;
+    }
+
     return true;
 }
 
@@ -280,7 +293,10 @@ static void main_loop()
 {    
     while(is_running())
     {
-        process_user_input();        
+        process_user_input();
+        
+        dx11::render_texture(textures.get_dx_texture(input_image_texture_id), dx_ctx);
+
         render_imgui_frame(); 
     }
 }

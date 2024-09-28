@@ -320,5 +320,7 @@ namespace image
 
 namespace image
 {
+    void fill(ImageView const& view, Pixel color);
+
     void fill(SubView const& view, Pixel color);
 }

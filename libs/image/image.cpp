@@ -88,6 +88,14 @@ namespace image
 
 namespace image
 {
+    void fill(ImageView const& view, Pixel color)
+    {
+        assert(view.matrix_data_);
+
+        sp::fill_span_32(to_span(view), color);
+    }
+
+
     void fill(SubView const& view, Pixel color)
     {
         assert(view.matrix_data_);
