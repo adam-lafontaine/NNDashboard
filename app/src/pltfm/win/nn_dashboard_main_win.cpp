@@ -258,16 +258,15 @@ static bool main_init()
 
     display_state.ai_files = ai_files;
 
-    display_state.to_texture = [](img::Image const& src)
-    {
-        dx11::init_texture(src.data_, src.width, src.height, textures.get_dx_texture(input_image_texture_id), dx_ctx);
-        return textures.get_imgui_texture(input_image_texture_id);
-    };
-
     if (!display::init(display_state))
     {
         return false;
     }
+
+    auto& src = display_state.input_image;
+
+    dx11::init_texture(src.data_, src.width, src.height, textures.get_dx_texture(input_image_texture_id), dx_ctx);
+    display_state.input_texture = textures.get_imgui_texture(input_image_texture_id);
 
     return true;
 }
