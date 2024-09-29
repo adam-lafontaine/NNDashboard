@@ -48,7 +48,7 @@ template <typename T>
 class Matrix2D
 {
 public:
-	T* data_ = nullptr;
+	T* data_ = 0;
 	u32 width = 0;
 	u32 height = 0;
 };
@@ -59,7 +59,7 @@ class MatrixView2D
 {
 public:
 
-	T* matrix_data_ = nullptr;
+	T* matrix_data_ = 0;
 
 	u32 width = 0;
 	u32 height = 0;

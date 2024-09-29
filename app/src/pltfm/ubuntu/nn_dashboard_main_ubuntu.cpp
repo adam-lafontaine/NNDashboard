@@ -221,16 +221,16 @@ static bool main_init()
 
     display_state.ai_files = ai_files;
 
-    display_state.to_texture = [](img::Image const& src)
-    {
-        ogl::init_texture(src.data_, src.width, src.height, textures.get_ogl_texture(input_image_texture_id));
-        return textures.get_imgui_texture(input_image_texture_id);
-    };
-
     if (!display::init(display_state))
     {
         return false;
     }
+
+    auto& src = display_state.input_image;
+
+    ogl::init_texture(src.data_, src.width, src.height, textures.get_ogl_texture(input_image_texture_id));
+    display_state.input_texture = textures.get_imgui_texture(input_image_texture_id);
+
 
     return true;
 }
@@ -253,6 +253,7 @@ static void main_loop()
     while(is_running())
     {
         process_user_input();
+        
         ogl::render_texture(textures.get_ogl_texture(input_image_texture_id));
 
         render_imgui_frame();
@@ -269,10 +270,7 @@ int main()
 
     run_state = RunState::Run;
 
-    while (is_running())
-    {
-        main_loop();
-    }
+    main_loop();
 
     main_close();
 

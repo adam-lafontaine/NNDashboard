@@ -7,7 +7,6 @@
 
 #include <cassert>
 #include <thread>
-#include <functional>
 
 namespace img = image;
 namespace num = numeric;
@@ -15,9 +14,6 @@ namespace num = numeric;
 
 namespace display
 {
-    using texture_f = std::function<ImTextureID(img::Image const&)>;
-
-
     enum class LoadStatus : u8
     {
         NotLoaded = 0,
@@ -40,7 +36,6 @@ namespace display
         ImTextureID input_texture = 0;
 
         mlai::DataFiles ai_files;
-        texture_f to_texture = [](auto v){ return (ImTextureID)0; };
     };
 
 
@@ -86,13 +81,6 @@ namespace internal
 
     static bool create_input_display(DisplayState& state)
     {
-        state.input_texture = state.to_texture(state.input_image);
-
-        if (!state.input_texture)
-        {
-            return false;
-        }
-
         auto wd = state.ai_state.test_data.image_width; // 17
         auto hd = state.ai_state.test_data.image_height; // 11
 
