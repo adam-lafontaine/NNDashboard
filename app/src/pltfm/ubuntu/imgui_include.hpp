@@ -259,6 +259,8 @@ namespace ogl
     {
         static_assert(sizeof(P) == 4);
 
+        assert(data);
+
         texture.image_data = (void*)data;
         texture.image_width = width;
         texture.image_height = height;

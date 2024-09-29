@@ -156,6 +156,7 @@ display := $(src)/display
 display_h := $(display)/display.hpp
 display_h += $(image_h)
 display_h += $(mlai_h)
+display_h += $(numeric_h)
 
 #*************
 

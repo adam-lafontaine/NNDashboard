@@ -99,7 +99,7 @@ namespace internal
         auto wi = state.input_image.width;
         auto hi = state.input_image.height;
 
-        if (wi < wd || hi < hd)
+        if (!wd || !hd || wi < wd || hi < hd)
         {
             return false;
         }
@@ -122,6 +122,7 @@ namespace internal
 
         return true;
     }
+
 
     static void load_ai_data_async(DisplayState& state)
     {
@@ -207,6 +208,29 @@ namespace display
         {
             internal::load_ai_data_async(state);            
         }
+
+        cstr msg = "";
+        switch (state.ai_load_status)
+        {
+        case LS::Fail:
+            msg = "ERROR";
+            break;
+
+        case LS::InProgress:
+            msg = "Loading...";
+            break;
+
+        case LS::Loaded:
+            msg = "OK";
+            break;
+
+        default:
+            msg = "";
+            break;
+        }
+
+        ImGui::SameLine();
+        ImGui::Text("%s", msg);
 
         ImGui::BeginGroup();
         internal::image_data_properties(state.ai_state.train_data, "Training data");

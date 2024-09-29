@@ -46,7 +46,7 @@ namespace
 
     display::DisplayState display_state;
 
-    #define ROOT "~Repos/NNDashboard/resources/test_data/"
+    #define ROOT "/home/adam/Repos/NNDashboard/resources/test_data/"
 
     constexpr mlai::DataFiles ai_files = {
         ROOT "train-images.idx3-ubyte",
