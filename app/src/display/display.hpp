@@ -176,7 +176,7 @@ namespace internal
 
     static void image_data_properties(mnist::ImageData const& data, cstr title)
     {
-        ImGui::Text(title);
+        ImGui::Text("%s", title);
         ImGui::Text(" count: %u", data.image_count);
         ImGui::Text(" width: %u", data.image_width);
         ImGui::Text("height: %u", data.image_height);
@@ -186,7 +186,7 @@ namespace internal
 
     static void label_data_properties(mnist::LabelData const& data, cstr title)
     {
-        ImGui::Text(title);
+        ImGui::Text("%s", title);
         ImGui::Text(" count: %u", data.label_count);
     }
 

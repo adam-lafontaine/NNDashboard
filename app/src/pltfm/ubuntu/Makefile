@@ -13,7 +13,7 @@ NO_FLAGS :=
 SDL2   := `sdl2-config --cflags --libs`
 OPENGL := -lGL -ldl
 
-ALL_LFLAGS := $(SDL2) $(OPENGL)
+ALL_LFLAGS := $(SDL2) $(OPENGL) -lpthread
 
 
 root       := ../../../..
@@ -31,18 +31,6 @@ exe := nn_dashboard
 program_exe := $(build)/$(exe)
 
 
-
-
-#*** libs ***
-
-alloc_type := $(libs)/alloc_type
-span       := $(libs)/span
-util       := $(libs)/util
-sdl        := $(libs)/sdl
-
-#************
-
-
 #*** imgui ***
 
 imgui := $(pltfm)
@@ -56,6 +44,8 @@ imgui_include_h += $(imgui_options_h)
 
 #*** libs/util ***
 
+util := $(libs)/util
+
 types_h        := $(util)/types.hpp
 stopwatch_h    := $(util)/stopwatch.hpp
 stack_buffer_h := $(util)/stack_buffer.hpp
@@ -67,6 +57,8 @@ numeric_h += $(types_h)
 
 
 #*** alloc_type ***
+
+alloc_type := $(libs)/alloc_type
 
 alloc_type_h := $(alloc_type)/alloc_type.hpp
 alloc_type_h += $(types_h)
@@ -87,6 +79,8 @@ memory_buffer_h += $(alloc_type_h)
 
 #*** span ***
 
+span := $(libs)/span
+
 span_h := $(span)/span.hpp
 span_h += $(memory_buffer_h)
 span_h += $(stack_buffer_h)
@@ -98,11 +92,57 @@ span_c += $(span_h)
 #************
 
 
+#*** image ***
+
+image := $(libs)/image
+
+image_h := $(image)/image.hpp
+image_h += $(span_h)
+
+image_c := $(image)/image.cpp
+image_c += $(image_h)
+
+#*************
+
+
 #*** sdl ***
+
+sdl := $(libs)/sdl
 
 sdl_include_h := $(sdl)/sdl_include.hpp
 
 #**********
+
+
+#*** mnist ***
+
+mnist := $(libs)/mnist
+
+mnist_h := $(mnist)/mnist.hpp
+mnist_c := $(mnist)/mnist.cpp
+
+#************
+
+
+#*** mlai ***
+
+mlai := $(src)/mlai
+
+mlai_h := $(mlai)/mlai.hpp
+mlai_c := $(mlai)/mlai.cpp
+
+#************
+
+
+#*** display ***
+
+display := $(src)/display
+
+display_h := $(display)/display.hpp
+display_h += $(image_h)
+display_h += $(mlai_h)
+
+#*************
 
 
 #*** main cpp ***
@@ -112,12 +152,15 @@ main_o := $(build)/main.o
 obj    := $(main_o)
 
 main_dep := $(imgui_include_h)
+main_dep += $(display_h)
 main_dep += $(sdl_include_h)
 
 # main_o.cpp
+main_dep += $(mlai_c)
+main_dep += $(image_c)
+main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)
-
 
 #****************
 
