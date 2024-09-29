@@ -54,4 +54,6 @@ namespace mnist
 
 
     img::GrayView image_at(ImageData const& data, u32 index);
+
+    u8 label_at(LabelData const& data, u32 index);
 }

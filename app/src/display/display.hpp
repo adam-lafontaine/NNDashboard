@@ -71,6 +71,19 @@ namespace display
 {
 namespace internal
 {
+    static void HelpMarker(const char* desc)
+    {
+        ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort) && ImGui::BeginTooltip())
+        {
+            ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+            ImGui::TextUnformatted(desc);
+            ImGui::PopTextWrapPos();
+            ImGui::EndTooltip();
+        }
+    }
+
+
     static bool create_input_display(DisplayState& state)
     {
         state.input_texture = state.to_texture(state.input_image);
@@ -221,27 +234,57 @@ namespace display
     }
     
     
-    inline void input_image_window(DisplayState& state)
+    inline void inspect_data_window(DisplayState& state)
     {
-        u32 image_id = 4;
-        f32 scale = 1.0f;
-
-        auto& view = state.input_view;
+        ImGui::Begin("Inspect");
 
         auto w = state.input_image.width;
         auto h = state.input_image.height;
 
-        if (state.ai_load_status == LoadStatus::Loaded)
+        if (state.ai_load_status != LoadStatus::Loaded)
         {
-            auto src_data = state.ai_state.train_data;
-            auto src_gray = mnist::image_at(src_data, image_id);
+            // empty image
+            ImGui::Image(state.input_texture, ImVec2(w, h));
 
-            internal::scale_view(src_gray, view);
-        }        
+            ImGui::End();
+            return;
+        }
 
-        ImGui::Begin("Input Image");
+        auto& view = state.input_view;
+        auto& ai = state.ai_state;
 
+        auto src_data = ai.train_data;
+        auto label_data = ai.train_labels;
+
+        static int data_option = 0;
+        ImGui::RadioButton("Training data", &data_option, 0); ImGui::SameLine();
+        ImGui::RadioButton("Testing data", &data_option, 1);
+
+        static int data_id = 0;
+
+        if (data_option)
+        {
+            src_data = ai.test_data;
+            label_data = ai.test_labels;
+        }
+        
+        int data_id_min = 0;
+        int data_id_max = src_data.image_count - 1;
+
+        if (data_id > data_id_max)
+        {
+            data_id = data_id_max;
+        }
+
+        auto src_gray = mnist::image_at(src_data, (u32)data_id);
+
+        internal::scale_view(src_gray, view);
         ImGui::Image(state.input_texture, ImVec2(w, h));
+
+        internal::HelpMarker("CTRL+click to input value.");
+        ImGui::SetNextItemWidth(-100);
+        ImGui::SliderInt("Data index", &data_id, data_id_min, data_id_max);
+        ImGui::Text("Label: %u", mnist::label_at(label_data, (u32)data_id));
 
         ImGui::End();
     }

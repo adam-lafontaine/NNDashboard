@@ -171,7 +171,7 @@ static void render_imgui_frame()
 #endif
 
     display::status_window(display_state);
-    display::input_image_window(display_state);
+    display::inspect_data_window(display_state);
 
     ImGui::Render();
 
@@ -260,7 +260,7 @@ static bool main_init()
 
     display_state.to_texture = [](img::Image const& src)
     {
-        dx11::init_texture(src.data_, src.width, src.height, textures.get(input_image_texture_id), dx_ctx);
+        dx11::init_texture(src.data_, src.width, src.height, textures.get_dx_texture(input_image_texture_id), dx_ctx);
         return textures.get_imgui_texture(input_image_texture_id);
     };
 

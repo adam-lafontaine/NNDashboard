@@ -201,4 +201,10 @@ namespace mnist
 
         return view;
     }
+
+
+    u8 label_at(LabelData const& data, u32 index)
+    {
+        return data.label_buffer.data_[index];
+    }
 }
