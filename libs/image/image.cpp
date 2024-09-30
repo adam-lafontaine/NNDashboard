@@ -92,7 +92,7 @@ namespace image
     {
         assert(view.matrix_data_);
 
-        sp::fill_span_32(to_span(view), color);
+        sp::fill_32(to_span(view), color);
     }
 
 
@@ -102,7 +102,7 @@ namespace image
 
         for (u32 y = 0; y < view.height; y++)
         {
-            sp::fill_span_32(row_span(view, y), color);
+            sp::fill_32(row_span(view, y), color);
         }
     }
 }

@@ -22,11 +22,12 @@ namespace mlai
     }
 
 
-    void destroy_data(AI_State& state)
+    void destroy(AI_State& state)
     {
         mnist::destroy_data(state.train_data);
         mnist::destroy_data(state.test_data);
         mnist::destroy_data(state.train_labels);
         mnist::destroy_data(state.test_labels);
+        nn::destroy(state.mlp);
     }
 }

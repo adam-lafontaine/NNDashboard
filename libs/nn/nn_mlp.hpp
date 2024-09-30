@@ -24,6 +24,21 @@ namespace nn
     };
 
 
+    class NetTopology
+    {
+    public:
+        constexpr static u32 MAX_LAYERS = 16;
+
+        u32 n_layers = 0;
+
+        u32 input_size = 0;
+
+        u32 layer_sizes[MAX_LAYERS] = { 0 };
+
+        u32 output_size = 0;
+    };
+
+
     class MultiLayerPerceptron
     {
     public:
@@ -40,7 +55,13 @@ namespace nn
     using Net = MultiLayerPerceptron;
 
 
-    void create(Net& net, SpanView<u32> const& layer_sizes);
+    inline void destroy(Net& net)
+    {
+        mb::destroy_buffer(net.memory);
+    }
+
+
+    void create(Net& net, NetTopology const& layer_sizes);
 
     void eval(Net const& net, Span32 const& input);
 

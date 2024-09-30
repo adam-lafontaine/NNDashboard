@@ -41,7 +41,7 @@ namespace display
 
     inline void destroy(DisplayState& state)
     {
-        mlai::destroy_data(state.ai_state);
+        mlai::destroy(state.ai_state);
         img::destroy_image(state.input_image);
     }
 

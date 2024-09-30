@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../../libs/mnist/mnist.hpp"
+#include "../../../libs/nn/nn_mlp.hpp"
 
 
 namespace mlai
@@ -10,11 +11,15 @@ namespace mlai
     public:
 
         mnist::ImageData train_data;
-        mnist::ImageData test_data;
-
         mnist::LabelData train_labels;
+
+        mnist::ImageData test_data;
         mnist::LabelData test_labels;
 
+        nn::Net mlp;
+
+        f32 train_error = 1.0f;
+        f32 test_error = 1.0f;
     };
 
 
@@ -30,7 +35,7 @@ namespace mlai
 
     bool load_data(AI_State& state, DataFiles files);
 
-    void destroy_data(AI_State& state);
+    void destroy(AI_State& state);
 
 
 

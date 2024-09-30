@@ -32,7 +32,28 @@ namespace nn
     }
 
 
-    Matrix32 push_matrix(u32 width, u32 height, MemoryBuffer<f32>& buffer)
+    static SpanView<u32> to_span(NetTopology const& layers)
+    {
+        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
+        u32 len = layers.n_layers + 2;
+
+        size_data[0] = layers.input_size;
+        size_data[len - 1] = layers.output_size;
+
+        for (u32 i = 1; i < len - 1; i++)
+        {
+            size_data[i] = layers.layer_sizes[i - 1];
+        }
+
+        SpanView<u32> size_span{};
+        size_span.data = size_data;
+        size_span.length = len;
+
+        return size_span;
+    }
+
+
+    static Matrix32 push_matrix(u32 width, u32 height, MemoryBuffer<f32>& buffer)
     {
         Matrix32 mat{};
         mat.width = width;
@@ -44,7 +65,7 @@ namespace nn
 
 
     template <typename T>
-    SpanView<T> row_span(MatrixView2D<T> const& mat, u16 h)
+    static SpanView<T> row_span(MatrixView2D<T> const& mat, u16 h)
     {
         Span<T> span{};
 
@@ -55,7 +76,7 @@ namespace nn
     }
 
 
-    void eval_forward(Layer const& layer)
+    static void eval_forward(Layer const& layer)
     {
         auto& in = layer.act_in;
         auto& weights = layer.weights;
@@ -76,7 +97,7 @@ namespace nn
     }
 
 
-    void update_back(Layer const& layer)
+    static void update_back(Layer const& layer)
     {
         auto& in = layer.act_in;
         auto& weights = layer.weights;
@@ -112,16 +133,20 @@ namespace nn
 
 namespace nn
 {
-    void create(Net& net, SpanView<u32> const& layer_sizes)
-    {
+    void create(Net& net, NetTopology const& topology)
+    {        
+        auto size_span = to_span(topology);
+
         auto& buffer = net.memory;
-        if (!mb::create_buffer(buffer, net_element_count(layer_sizes), "mlp"))
+        if (!mb::create_buffer(buffer, net_element_count(size_span), "mlp"))
         {
 
         }
 
-        auto N = layer_sizes.length - 1;
-        auto sizes = layer_sizes.data;
+        span::fill_32(span::make_view(buffer), 0.5f);
+
+        auto N = size_span.length - 1;
+        auto sizes = size_span.data;
 
         net.layers.length = N;
 

@@ -148,6 +148,18 @@ mnist_c := $(mnist)/mnist.cpp
 #************
 
 
+#*** nn_mlp ***
+
+nn := $(libs)/nn
+
+nn_mlp_h := $(nn)/nn_mlp.hpp
+nn_mlp_h += $(span_h)
+
+nn_mlp_c := $(nn)/nn_mlp.cpp
+
+#*************
+
+
 #*** mlai ***
 
 mlai := $(src)/mlai
@@ -197,6 +209,7 @@ main_dep += $(diagnostics_h)
 main_dep += $(mlai_c)
 main_dep += $(image_c)
 main_dep += $(mnist_c)
+main_dep += $(nn_mlp_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)
 main_dep += $(qsprintf_c)
