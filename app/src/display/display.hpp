@@ -51,7 +51,7 @@ namespace display
         u32 display_width = 480;
         u32 display_height = 320;
 
-        if (!img::create_image(state.input_image, display_width, display_height))
+        if (!img::create_image(state.input_image, display_width, display_height, "input_image"))
         {
             return false;
         }

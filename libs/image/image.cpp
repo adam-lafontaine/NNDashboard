@@ -7,9 +7,9 @@ namespace sp = span;
 
 namespace image
 {
-    bool create_image(Image& image, u32 width, u32 height)
+    bool create_image(Image& image, u32 width, u32 height, cstr tag)
     {
-        auto data = mem::malloc<Pixel>(width * height, "create_image");
+        auto data = mem::malloc<Pixel>(width * height, tag);
         if (!data)
         {
             return false;

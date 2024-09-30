@@ -59,7 +59,7 @@ namespace mnist
 
         MemoryBuffer<u8> buffer8;
 
-        mb::create_buffer<u8>(buffer8, n_bytes);
+        mb::create_buffer<u8>(buffer8, n_bytes, "mnist data pixels");
         if (!buffer8.ok)
         {
             file.close();
@@ -71,7 +71,7 @@ namespace mnist
         file.close();
 
         MemoryBuffer<f32> buffer32;
-        mb::create_buffer<f32>(buffer32, n_rows * n_cols);
+        mb::create_buffer<f32>(buffer32, n_rows * n_cols, "mnist data input");
         if (!buffer32.ok)
         {
             mb::destroy_buffer(buffer8);
@@ -114,7 +114,7 @@ namespace mnist
         auto n_bytes = n_labels;
 
         MemoryBuffer<u8> buffer8;
-        mb::create_buffer<u8>(buffer8, n_bytes);
+        mb::create_buffer<u8>(buffer8, n_bytes, "mnist labels");
         if (!buffer8.ok)
         {
             file.close();
@@ -126,7 +126,7 @@ namespace mnist
         file.close();
 
         MemoryBuffer<f32> buffer32;
-        mb::create_buffer<f32>(buffer32, 10);
+        mb::create_buffer<f32>(buffer32, 10, "mnist output");
         if (!buffer32.ok)
         {
             mb::destroy_buffer(buffer8);

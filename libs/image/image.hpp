@@ -25,7 +25,7 @@ namespace image
     using GrayView = MatrixView2D<u8>;
 
 
-    bool create_image(Image& image, u32 width, u32 height);
+    bool create_image(Image& image, u32 width, u32 height, cstr tag);
 
     void destroy_image(Image& image);
 
@@ -100,7 +100,7 @@ namespace image
     } 
 
 
-    inline Buffer8 create_buffer8(u32 n_pixels)
+    /*inline Buffer8 create_buffer8(u32 n_pixels)
 	{
 		Buffer8 buffer;
 		mb::create_buffer(buffer, n_pixels);
@@ -113,7 +113,7 @@ namespace image
 		Buffer32 buffer;
 		mb::create_buffer(buffer, n_pixels);
 		return buffer;
-	}
+	}*/
 
 
     inline Buffer8 create_buffer8(u32 n_pixels, cstr tag)
