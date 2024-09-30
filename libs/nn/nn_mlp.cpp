@@ -134,7 +134,7 @@ namespace nn
 {
     void create(Net& net, NetTopology const& topology)
     {   
-        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };     
+        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
         auto size_span = to_span(topology, size_data);
 
         auto& buffer = net.memory;
@@ -154,9 +154,12 @@ namespace nn
 
         u32 size32 = 0;
 
+        assert(sizes[0] > 0);
+
         for (u32 i = 0; i < N; i++)
         {        
             auto& layer = layers[i];
+            assert(sizes[i] > 0);
 
             if (i == 0)
             {
@@ -212,5 +215,14 @@ namespace nn
             auto& layer = net.layers.data[N - 1 - i];
             update_back(layer);
         }
+    }
+
+
+    u32 mlp_bytes(NetTopology const& topology)
+    {
+        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
+        auto size_span = to_span(topology, size_data);
+
+        return net_element_count(size_span) * sizeof(f32);
     }
 }

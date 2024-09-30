@@ -359,29 +359,42 @@ namespace display
 
         auto layer_labels = layer_labels_array.labels;
 
+        auto& topology = state.topology;
+        auto& mlp = state.ai_state.mlp;
+
+        auto is_disabled = mlp.memory.ok;
+
 
         ImGui::Begin("Topology");
 
-        //auto& mlp = state.ai_state.mlp;
-
         constexpr int layer_size_min = 1;
         constexpr int layer_size_max = 32;
+        constexpr int layer_size_default = 16;
 
-        auto& topology = state.topology;
+        
         static int n_layers = layer_size_min;
         static int layers[N] = { 0 };
 
         ImGui::SliderInt("Inner layers", &n_layers, 1, (int)topology.MAX_LAYERS);
-        
 
         ImGui::Text("%u", topology.input_size);
         ImGui::SameLine();
 
+        if (is_disabled)
+        {
+            ImGui::BeginDisabled();
+        }
+
         for (u32 i = 0; i < topology.n_layers; i++)
         {
-            layers[i] = num::max(layer_size_min, layers[i]);
+            layers[i] = layers[i] ? num::max(layer_size_min, layers[i]) : layer_size_default;
             ImGui::VSliderInt(layer_labels[i], ImVec2(18, 160), layers + i, layer_size_min, layer_size_max);
             ImGui::SameLine();
+        }
+
+        if (is_disabled)
+        {
+            ImGui::EndDisabled();
         }
 
         ImGui::Text("%u", topology.output_size);
@@ -390,6 +403,16 @@ namespace display
         for (u32 i = 0; i < topology.n_layers; i++)
         {
             topology.layer_sizes[i] = (u32)layers[i];
+        }
+
+        ImGui::Text("Bytes: %u", nn::mlp_bytes(topology));
+
+        if (state.ai_load_status == LoadStatus::Loaded && !is_disabled)
+        {
+            if (ImGui::Button("Create") )
+            {
+                nn::create(mlp, topology);
+            }
         }
 
         ImGui::End();
