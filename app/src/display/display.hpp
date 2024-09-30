@@ -36,6 +36,8 @@ namespace display
         ImTextureID input_texture = 0;
 
         mlai::DataFiles ai_files;
+
+        nn::NetTopology topology{};
     };
 
 
@@ -112,6 +114,21 @@ namespace internal
     }
 
 
+    static bool load_data(DisplayState& state)
+    {
+        auto& ai = state.ai_state;
+        if (!mlai::load_data(ai, state.ai_files))
+        {
+            return false;
+        }
+
+        state.topology.input_size = mnist::input_at(ai.test_data, 0).length;
+        state.topology.output_size = mnist::output_at(ai.test_labels, 0).length;
+
+        return true;
+    }
+    
+    
     static void load_ai_data_async(DisplayState& state)
     {
         using LS = LoadStatus;
@@ -119,7 +136,7 @@ namespace internal
         auto const load = [&]()
         {
             state.ai_load_status = LS::InProgress;
-            auto ok = mlai::load_data(state.ai_state, state.ai_files);
+            auto ok = load_data(state);
             ok &= create_input_display(state);
 
             state.ai_load_status = ok ? LS::Loaded : LS::Fail;
@@ -299,5 +316,93 @@ namespace display
         ImGui::Text("Label: %u", mnist::label_at(label_data, (u32)data_id));
 
         ImGui::End();
+    }
+
+
+    
+
+
+    template <u32 N>
+    class ImGuiLabelArray
+    {
+    public:
+        char labels[N][32] = { 0 };
+    };
+
+
+    template <u32 N>
+    constexpr static ImGuiLabelArray<N> make_imgui_labels(cstr base)
+    {
+        ImGuiLabelArray<N> labels{};
+
+        auto len = span::strlen(base);
+
+        for (u32 i = 0; i < N; i++)
+        {
+            auto dst = labels.labels[i];
+            for (u32 b = 0; b < len; b++)
+            {
+                dst[b] = base[b];
+            }
+            dst[len] = 'A' + i;
+        }
+
+        return labels;
+    }
+
+
+    inline void topology_window(DisplayState& state)
+    {
+        constexpr auto N = nn::NetTopology::MAX_LAYERS;
+
+        constexpr auto layer_labels_array = make_imgui_labels<N>("##LayerLabels");
+
+        auto layer_labels = layer_labels_array.labels;
+
+
+        ImGui::Begin("Topology");
+
+        //auto& mlp = state.ai_state.mlp;
+
+        constexpr int layer_size_min = 1;
+        constexpr int layer_size_max = 32;
+
+        auto& topology = state.topology;
+        static int n_layers = layer_size_min;
+        static int layers[N] = { 0 };
+
+        ImGui::SliderInt("Inner layers", &n_layers, 1, (int)topology.MAX_LAYERS);
+        
+
+        ImGui::Text("%u", topology.input_size);
+        ImGui::SameLine();
+
+        for (u32 i = 0; i < topology.n_layers; i++)
+        {
+            layers[i] = num::max(layer_size_min, layers[i]);
+            ImGui::VSliderInt(layer_labels[i], ImVec2(18, 160), layers + i, layer_size_min, layer_size_max);
+            ImGui::SameLine();
+        }
+
+        ImGui::Text("%u", topology.output_size);
+
+        topology.n_layers = (u32)n_layers;
+        for (u32 i = 0; i < topology.n_layers; i++)
+        {
+            topology.layer_sizes[i] = (u32)layers[i];
+        }
+
+        ImGui::End();
+    }
+}
+
+
+namespace display
+{
+    inline void show_display(DisplayState& state)
+    {
+        status_window(state);
+        inspect_data_window(state);
+        topology_window(state);
     }
 }

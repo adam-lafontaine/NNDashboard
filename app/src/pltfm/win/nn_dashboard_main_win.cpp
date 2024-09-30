@@ -171,9 +171,7 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
-    display::status_window(display_state);
-    display::inspect_data_window(display_state);
-
+    display::show_display(display_state);
     diagnostics::show_diagnostics();
 
     ImGui::Render();

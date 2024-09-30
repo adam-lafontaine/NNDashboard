@@ -92,7 +92,7 @@ namespace span
     template <typename T>
     inline void copy(SpanView<T> const& src, SpanView<T> const& dst)
     {
-        copy_u8((u8*)src.data, (u8*)dst.begin, src.length * sizeof(T));
+        copy_u8((u8*)src.data, (u8*)dst.data, src.length * sizeof(T));
     }
 
 

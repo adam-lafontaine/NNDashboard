@@ -32,9 +32,8 @@ namespace nn
     }
 
 
-    static SpanView<u32> to_span(NetTopology const& layers)
-    {
-        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
+    static SpanView<u32> to_span(NetTopology const& layers, u32* size_data)
+    {        
         u32 len = layers.n_layers + 2;
 
         size_data[0] = layers.input_size;
@@ -67,10 +66,10 @@ namespace nn
     template <typename T>
     static SpanView<T> row_span(MatrixView2D<T> const& mat, u16 h)
     {
-        Span<T> span{};
+        SpanView<T> span{};
 
         span.length = mat.width;
-        span.data = mat.data + h * mat.width;
+        span.data = mat.matrix_data_ + h * mat.width;
 
         return span;
     }
@@ -134,8 +133,9 @@ namespace nn
 namespace nn
 {
     void create(Net& net, NetTopology const& topology)
-    {        
-        auto size_span = to_span(topology);
+    {   
+        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };     
+        auto size_span = to_span(topology, size_data);
 
         auto& buffer = net.memory;
         if (!mb::create_buffer(buffer, net_element_count(size_span), "mlp"))

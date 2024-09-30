@@ -5,9 +5,6 @@
 
 namespace mlai
 {
-    
-
-
     bool load_data(AI_State& state, DataFiles files)
     {
         state.train_data = mnist::load_image_data(files.train_data_path);
