@@ -46,11 +46,11 @@ namespace memory_buffer
 	}
 
 
-	template <typename T>
+	/*template <typename T>
 	inline bool create_buffer(MemoryBuffer<T>& buffer, u32 n_elements)
 	{
 		return create_buffer(buffer, n_elements, "create_buffer");
-	}
+	}*/
 
 
 	template <typename T>

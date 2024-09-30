@@ -6,9 +6,7 @@ GPP += -mavx
 #GPP += -DNDEBUG
 GPP += -mwindows
 
-#GPP += -DIMAGE_READ
-#GPP += -DIMAGE_WRITE
-#GPP += -DALLOC_COUNT
+GPP += -DALLOC_COUNT
 
 # directories
 SDL := C:\SDL2\SDL2-2.30.5\x86_64-w64-mingw32
@@ -46,16 +44,6 @@ exe := nn_dashboard.exe
 program_exe := $(build)/$(exe)
 
 
-#*** libs ***
-
-alloc_type := $(libs)/alloc_type
-span       := $(libs)/span
-util       := $(libs)/util
-sdl        := $(libs)/sdl
-
-#************
-
-
 #*** imgui ***
 
 imgui := $(pltfm)
@@ -69,6 +57,8 @@ imgui_include_h += $(imgui_options_h)
 
 #*** libs/util ***
 
+util := $(libs)/util
+
 types_h        := $(util)/types.hpp
 stopwatch_h    := $(util)/stopwatch.hpp
 stack_buffer_h := $(util)/stack_buffer.hpp
@@ -80,6 +70,8 @@ numeric_h += $(types_h)
 
 
 #*** alloc_type ***
+
+alloc_type := $(libs)/alloc_type
 
 alloc_type_h := $(alloc_type)/alloc_type.hpp
 alloc_type_h += $(types_h)
@@ -98,7 +90,20 @@ memory_buffer_h += $(alloc_type_h)
 #***********
 
 
+#*** qsprintf ***
+
+qsprintf := $(libs)/qsprintf
+
+qsprintf_h := $(qsprintf)/qsprintf.hpp
+
+qsprintf_c := $(qsprintf)/qsprintf.cpp
+
+#***********
+
+
 #*** span ***
+
+span := $(libs)/span
 
 span_h := $(span)/span.hpp
 span_h += $(memory_buffer_h)
@@ -111,11 +116,69 @@ span_c += $(span_h)
 #************
 
 
+#*** image ***
+
+image := $(libs)/image
+
+image_h := $(image)/image.hpp
+image_h += $(span_h)
+
+image_c := $(image)/image.cpp
+image_c += $(image_h)
+
+#*************
+
+
 #*** sdl ***
+
+sdl := $(libs)/sdl
 
 sdl_include_h := $(sdl)/sdl_include.hpp
 
 #**********
+
+
+#*** mnist ***
+
+mnist := $(libs)/mnist
+
+mnist_h := $(mnist)/mnist.hpp
+mnist_c := $(mnist)/mnist.cpp
+
+#************
+
+
+#*** mlai ***
+
+mlai := $(src)/mlai
+
+mlai_h := $(mlai)/mlai.hpp
+mlai_c := $(mlai)/mlai.cpp
+
+#************
+
+
+#*** display ***
+
+display := $(src)/display
+
+display_h := $(display)/display.hpp
+display_h += $(image_h)
+display_h += $(mlai_h)
+display_h += $(numeric_h)
+
+#*************
+
+
+#*** diagnostics ***
+
+diagnostics := $(src)/diagnostics
+
+diagnostics_h := $(diagnostics)/diagnostics.hpp
+diagnostics_h += $(alloc_type_h)
+diagnostics_h += $(qsprintf_h)
+
+#*************
 
 
 #*** main cpp ***
@@ -126,11 +189,17 @@ obj    := $(main_o)
 
 main_dep := $(imgui_include_h)
 main_dep += $(sdl_include_h)
+main_dep += $(display_h)
+main_dep += $(diagnostics_h)
+
 
 # main_o.cpp
+main_dep += $(mlai_c)
+main_dep += $(image_c)
+main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)
-
+main_dep += $(qsprintf_c)
 
 #****************
 
@@ -175,7 +244,12 @@ run: build
 
 
 clean:
-	rm -rfv $(build)/*
+	rm -fv $(build)/*
+
+
+clean_main:
+	rm -fv $(build)/main.o
+
 
 setup:
 	mkdir -p $(build)

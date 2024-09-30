@@ -1,6 +1,7 @@
 #include "imgui_include.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
-#include "../../../../libs/util/types.hpp"
+#include "../../display/display.hpp"
+#include "../../diagnostics/diagnostics.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)
@@ -39,9 +40,21 @@ namespace
     RunState run_state = RunState::Begin;
 
     constexpr u32 N_TEXTURES = 1;
+    constexpr ogl::TextureId input_image_texture_id = { 0 };
 
     SDL_GLContext gl_context;
     ogl::TextureList<N_TEXTURES> textures;
+
+    display::DisplayState display_state;
+
+    #define ROOT "/home/adam/Repos/NNDashboard/resources/test_data/"
+
+    constexpr mlai::DataFiles ai_files = {
+        ROOT "train-images.idx3-ubyte",
+        ROOT "t10k-images.idx3-ubyte",
+        ROOT "train-labels.idx1-ubyte",
+        ROOT "t10k-labels.idx1-ubyte"
+    };
 }
 
 
@@ -134,13 +147,18 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
+    display::status_window(display_state);
+    display::inspect_data_window(display_state);
+
+    diagnostics::show_diagnostics();
+    
     ImGui::Render();
     
     ogl::render(window, gl_context);        
 }
 
 
-static bool main_init()
+static bool ui_init()
 {
     if(!sdl::init())
     {       
@@ -197,6 +215,30 @@ static bool main_init()
 }
 
 
+static bool main_init()
+{
+    if (!ui_init())
+    {
+        return false;
+    }
+
+    display_state.ai_files = ai_files;
+
+    if (!display::init(display_state))
+    {
+        return false;
+    }
+
+    auto& src = display_state.input_image;
+
+    ogl::init_texture(src.data_, src.width, src.height, textures.get_ogl_texture(input_image_texture_id));
+    display_state.input_texture = textures.get_imgui_texture(input_image_texture_id);
+
+
+    return true;
+}
+
+
 static void main_close()
 {     
     ImGui_ImplOpenGL3_Shutdown();
@@ -214,7 +256,8 @@ static void main_loop()
     while(is_running())
     {
         process_user_input();
-        //ogl::render_texture(textures.get(camera_texture_id));
+        
+        ogl::render_texture(textures.get_ogl_texture(input_image_texture_id));
 
         render_imgui_frame();
     }
@@ -230,10 +273,7 @@ int main()
 
     run_state = RunState::Run;
 
-    while (is_running())
-    {
-        main_loop();
-    }
+    main_loop();
 
     main_close();
 

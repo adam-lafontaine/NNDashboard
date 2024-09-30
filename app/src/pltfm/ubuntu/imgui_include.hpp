@@ -214,9 +214,9 @@ namespace ogl
         GLuint gl_ref;
         TextureId id;
 
-        int image_width;
-        int image_height;
-        void* image_data;
+        int image_width = 0;
+        int image_height = 0;
+        void* image_data = 0;
     };
 
 
@@ -230,9 +230,9 @@ namespace ogl
 
         GLuint gl_ref_data[count] = { 0 };
 
-        Texture& get(TextureId id) { return data[id.value]; }
+        Texture& get_ogl_texture(TextureId id) { return data[id.value]; }
 
-        void* get_imgui_texture(TextureId id) { return (void*)(intptr_t)get(id).gl_ref; }
+        ImTextureID get_imgui_texture(TextureId id) { return (ImTextureID)(intptr_t)get_ogl_texture(id).gl_ref; }
     };
 
 
@@ -259,6 +259,8 @@ namespace ogl
     {
         static_assert(sizeof(P) == 4);
 
+        assert(data);
+
         texture.image_data = (void*)data;
         texture.image_width = width;
         texture.image_height = height;
@@ -276,6 +278,11 @@ namespace ogl
 
     static inline void render_texture(Texture const& texture)
     {
+        if (!texture.image_data)
+        {
+            return;
+        }
+
         auto texture_id = texture.id.value;
 
         assert(texture_id >= 0);

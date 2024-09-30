@@ -207,7 +207,14 @@ namespace counts
 
         size_t const n_bytes = n_elements * ac.element_size;
 
-        auto data = std::aligned_alloc(ac.element_size, n_bytes);
+        void* data = 0;
+
+        #if defined _WIN32
+        data = std::malloc(n_bytes);
+        #else
+        data = std::aligned_alloc(ac.element_size, n_bytes);
+        #endif
+        
         assert(data && "Allocation failed");
         if (!data)
         {

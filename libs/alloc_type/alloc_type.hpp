@@ -3,7 +3,7 @@
 #include "../util/types.hpp"
 
 
-//#define ALLOC_NO_COUNT
+//#define ALLOC_COUNT
 
 
 namespace mem

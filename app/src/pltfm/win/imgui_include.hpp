@@ -14,13 +14,6 @@
 #include <SDL2/SDL_syswm.h>
 
 
-// Data
-/*static ID3D11Device*            g_pd3dDevice = nullptr;
-static ID3D11DeviceContext*     g_pd3dDeviceContext = nullptr;
-static IDXGISwapChain*          g_pSwapChain = nullptr;
-static ID3D11RenderTargetView*  g_mainRenderTargetView = nullptr;*/
-
-
 namespace ui
 {
     class UIState
@@ -258,7 +251,7 @@ namespace dx11
     {
     public:
         ID3D11Texture2D* pTexture = 0;
-        ID3D11ShaderResourceView* srv;
+        ID3D11ShaderResourceView* srv = 0;
         TextureId id;
 
         int image_width;
@@ -274,9 +267,9 @@ namespace dx11
 
         Texture data[count] = { 0 };
 
-        Texture& get(TextureId id) { return data[id.value]; }
+        Texture& get_dx_texture(TextureId id) { return data[id.value]; }
 
-        void* get_imgui_texture(TextureId id) { return (void*)get(id).srv; }
+        ImTextureID get_imgui_texture(TextureId id) { return (ImTextureID)get_dx_texture(id).srv; }
     };
 
 
@@ -339,6 +332,11 @@ namespace dx11
 
     static inline void render_texture(Texture& texture, Context& ctx)
     {
+        if (!texture.pTexture || !texture.srv)
+        {
+            return;
+        }
+
         ctx.pd3dDeviceContext->UpdateSubresource(
             texture.pTexture, 
             0, 0, 

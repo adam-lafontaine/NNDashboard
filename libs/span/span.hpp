@@ -14,7 +14,7 @@ template <typename T>
 class SpanView
 {
 public:
-	T* begin = nullptr;
+	T* data = 0;
 	u32 length = 0;
 };
 
@@ -22,7 +22,7 @@ public:
 class StringView
 {
 public:
-    char* begin = nullptr;
+    char* begin = 0;
     u32 capacity = 0;
     u32 length = 0;
 };
@@ -34,11 +34,11 @@ using ByteView = SpanView<u8>;
 namespace span
 {
     template <typename T>
-    inline SpanView<T> make_view(MemoryBuffer<T>& buffer)
+    inline SpanView<T> make_view(MemoryBuffer<T> const& buffer)
     {
         SpanView<T> view{};
 
-        view.begin = buffer.data_;
+        view.data = buffer.data_;
         view.length = buffer.capacity_;
 
         return view;
@@ -53,7 +53,7 @@ namespace span
         auto data = mb::push_elements(buffer, length);
         if (data)
         {
-            view.begin = data;
+            view.data = data;
             view.length = length;
         }
 
@@ -69,7 +69,7 @@ namespace span
         auto data = sb::push_elements(buffer, length);
         if (data)
         {
-            view.begin = data;
+            view.data = data;
             view.length = length;
         }
 
@@ -92,7 +92,7 @@ namespace span
     template <typename T>
     inline void copy_span(SpanView<T> const& src, SpanView<T> const& dst)
     {
-        copy_u8((u8*)src.begin, (u8*)dst.begin, src.length * sizeof(T));
+        copy_u8((u8*)src.data, (u8*)dst.begin, src.length * sizeof(T));
     }
 
 
@@ -101,7 +101,7 @@ namespace span
     {
         static_assert(sizeof(T) == sizeof(u32));
         auto val = *((u32*)&value);
-        fill_u32((u32*)dst.begin, val, dst.length);
+        fill_u32((u32*)dst.data, val, dst.length);
     }
 
 
@@ -111,14 +111,14 @@ namespace span
         static_assert(sizeof(T) == sizeof(u8));
 
         auto val = *((u8*)&value);
-        fill_u8((u8*)dst.begin, val, dst.length);
+        fill_u8((u8*)dst.data, val, dst.length);
     }
     
     
     template <typename T>
 	inline void fill_span(SpanView<T> const& dst, T value)
 	{
-        T* d = dst.begin;
+        T* d = dst.data;
 		for (u32 i = 0; i < dst.length; ++i)
 		{
 			d[i] = value;

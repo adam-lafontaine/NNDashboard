@@ -1,6 +1,7 @@
 #include "imgui_include.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
-#include "../../../../libs/util/types.hpp"
+#include "../../display/display.hpp"
+#include "../../diagnostics/diagnostics.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)
@@ -39,9 +40,21 @@ namespace
     RunState run_state = RunState::Begin;
 
     constexpr u32 N_TEXTURES = 1;
+    constexpr dx11::TextureId input_image_texture_id = { 0 };
 
     dx11::Context dx_ctx;    
     dx11::TextureList<N_TEXTURES> textures;
+
+    display::DisplayState display_state;
+
+    #define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
+
+    constexpr mlai::DataFiles ai_files = {
+        ROOT "train-images.idx3-ubyte",
+        ROOT "t10k-images.idx3-ubyte",
+        ROOT "train-labels.idx1-ubyte",
+        ROOT "t10k-labels.idx1-ubyte"
+    };
 }
 
 
@@ -158,6 +171,11 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
+    display::status_window(display_state);
+    display::inspect_data_window(display_state);
+
+    diagnostics::show_diagnostics();
+
     ImGui::Render();
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -165,7 +183,7 @@ static void render_imgui_frame()
 }
 
 
-static bool main_init()
+static bool ui_init()
 {
     if(!sdl::init())
     {       
@@ -189,7 +207,7 @@ static bool main_init()
     //auto dw = dm.w;
     //auto dh = dm.h;
 
-    window = ui::create_sdl_dx11_window("Camera", dw, dh);
+    window = ui::create_sdl_dx11_window("Machine Learning", dw, dh);
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");
@@ -234,8 +252,33 @@ static bool main_init()
 }
 
 
+static bool main_init()
+{
+    if (!ui_init())
+    {
+        return false;
+    }
+
+    display_state.ai_files = ai_files;
+
+    if (!display::init(display_state))
+    {
+        return false;
+    }
+
+    auto& src = display_state.input_image;
+
+    dx11::init_texture(src.data_, src.width, src.height, textures.get_dx_texture(input_image_texture_id), dx_ctx);
+    display_state.input_texture = textures.get_imgui_texture(input_image_texture_id);
+
+    return true;
+}
+
+
 static void main_close()
 {
+    display::destroy(display_state);
+
     // Cleanup
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplSDL2_Shutdown();
@@ -253,6 +296,9 @@ static void main_loop()
     while(is_running())
     {
         process_user_input();
+        
+        dx11::render_texture(textures.get_dx_texture(input_image_texture_id), dx_ctx);
+
         render_imgui_frame(); 
     }
 }
