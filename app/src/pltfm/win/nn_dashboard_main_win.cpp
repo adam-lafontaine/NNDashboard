@@ -1,6 +1,7 @@
 #include "imgui_include.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
 #include "../../display/display.hpp"
+#include "../../diagnostics/diagnostics.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)
@@ -172,6 +173,8 @@ static void render_imgui_frame()
 
     display::status_window(display_state);
     display::inspect_data_window(display_state);
+
+    diagnostics::show_diagnostics();
 
     ImGui::Render();
 

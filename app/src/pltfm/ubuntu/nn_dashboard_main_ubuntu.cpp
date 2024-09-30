@@ -1,6 +1,7 @@
 #include "imgui_include.hpp"
 #include "../../../../libs/sdl/sdl_include.hpp"
 #include "../../display/display.hpp"
+#include "../../diagnostics/diagnostics.hpp"
 
 
 static void set_game_window_icon(SDL_Window* window)

@@ -77,6 +77,17 @@ memory_buffer_h += $(alloc_type_h)
 #***********
 
 
+#*** qsprintf ***
+
+qsprintf := $(libs)/qsprintf
+
+qsprintf_h := $(qsprintf)/qsprintf.hpp
+
+qsprintf_c := $(qsprintf)/qsprintf.cpp
+
+#***********
+
+
 #*** span ***
 
 span := $(libs)/span
@@ -146,6 +157,17 @@ display_h += $(numeric_h)
 #*************
 
 
+#*** diagnostics ***
+
+diagnostics := $(src)/diagnostics
+
+diagnostics_h := $(diagnostics)/diagnostics.hpp
+diagnostics_h += $(alloc_type_h)
+diagnostics_h += $(qsprintf_h)
+
+#*************
+
+
 #*** main cpp ***
 
 main_c := $(pltfm)/nn_dashboard_main_ubuntu.cpp
@@ -153,8 +175,9 @@ main_o := $(build)/main.o
 obj    := $(main_o)
 
 main_dep := $(imgui_include_h)
-main_dep += $(display_h)
 main_dep += $(sdl_include_h)
+main_dep += $(display_h)
+main_dep += $(diagnostics_h)
 
 # main_o.cpp
 main_dep += $(mlai_c)
@@ -162,6 +185,7 @@ main_dep += $(image_c)
 main_dep += $(mnist_c)
 main_dep += $(alloc_type_c)
 main_dep += $(span_c)
+main_dep += $(qsprintf_c)
 
 #****************
 
@@ -206,7 +230,11 @@ run: build
 
 
 clean:
-	rm -rfv $(build)/*
+	rm -fv $(build)/*
+
+
+clean_main:
+	rm -fv $(build)/main.o
 
 setup:
 	mkdir -p $(build)
