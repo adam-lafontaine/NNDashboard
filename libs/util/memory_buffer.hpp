@@ -103,7 +103,7 @@ namespace memory_buffer
 			buffer.size_ < buffer.capacity_;
 
 		auto elements_available = (buffer.capacity_ - buffer.size_) >= n_elements;
-		assert(elements_available);
+		assert(elements_available > 0);
 
 		if (!is_valid || !elements_available)
 		{

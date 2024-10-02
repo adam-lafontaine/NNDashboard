@@ -75,6 +75,17 @@ namespace span
 
         return view;
     }
+
+
+    template <typename T>
+    inline SpanView<T> to_span(T* data, u32 length)
+    {
+        SpanView<T> span{};
+        span.data = data;
+        span.length = length;
+
+        return span;
+    }
 }
 
 

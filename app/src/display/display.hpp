@@ -122,8 +122,8 @@ namespace internal
             return false;
         }
 
-        state.topology.input_size = mnist::input_at(ai.test_data, 0).length;
-        state.topology.output_size = mnist::output_at(ai.test_labels, 0).length;
+        state.topology.set_input_size(mnist::input_at(ai.test_data, 0).length);
+        state.topology.set_output_size(mnist::output_at(ai.test_labels, 0).length);
 
         return true;
     }
@@ -353,7 +353,7 @@ namespace display
 
     inline void topology_window(DisplayState& state)
     {
-        constexpr auto N = nn::NetTopology::MAX_LAYERS;
+        constexpr auto N = nn::NetTopology::MAX_INNER_LAYERS;
 
         constexpr auto layer_labels_array = make_imgui_labels<N>("##LayerLabels");
 
@@ -375,9 +375,9 @@ namespace display
         static int n_layers = layer_size_min;
         static int layers[N] = { 0 };
 
-        ImGui::SliderInt("Inner layers", &n_layers, 1, (int)topology.MAX_LAYERS);
+        ImGui::SliderInt("Inner layers", &n_layers, 1, (int)N);
 
-        ImGui::Text("%u", topology.input_size);
+        ImGui::Text("%u", topology.get_input_size());
         ImGui::SameLine();
 
         if (is_disabled)
@@ -397,7 +397,7 @@ namespace display
             ImGui::EndDisabled();
         }
 
-        ImGui::Text("%u", topology.output_size);
+        ImGui::Text("%u", topology.get_output_size());
 
         topology.n_layers = (u32)n_layers;
         for (u32 i = 0; i < topology.n_layers; i++)
@@ -409,7 +409,7 @@ namespace display
 
         if (state.ai_load_status == LoadStatus::Loaded && !is_disabled)
         {
-            if (ImGui::Button("Create") )
+            if (ImGui::Button("Create"))
             {
                 nn::create(mlp, topology);
             }

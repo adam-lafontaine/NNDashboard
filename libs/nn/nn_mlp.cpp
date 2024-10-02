@@ -5,53 +5,6 @@
 
 namespace nn
 {
-    static u32 net_element_count(SpanView<u32> const& layer_sizes)
-    {
-        auto N = layer_sizes.length - 1;
-        auto sizes = layer_sizes.data;
-
-        u32 act = 0;
-        u32 error = 0;
-        u32 weights = 0;
-        u32 bias = 0;
-
-        act = error = sizes[0];
-        
-        u32 count = act + error;
-
-        for (u32 i = 1; i < N; i++)
-        {
-            act = error = sizes[i + 1];
-            weights = sizes[i] * sizes[i + 1];
-            bias = sizes[i];
-
-            count += act + error + weights + bias;
-        }
-
-        return count;
-    }
-
-
-    static SpanView<u32> to_span(NetTopology const& layers, u32* size_data)
-    {        
-        u32 len = layers.n_layers + 2;
-
-        size_data[0] = layers.input_size;
-        size_data[len - 1] = layers.output_size;
-
-        for (u32 i = 1; i < len - 1; i++)
-        {
-            size_data[i] = layers.layer_sizes[i - 1];
-        }
-
-        SpanView<u32> size_span{};
-        size_span.data = size_data;
-        size_span.length = len;
-
-        return size_span;
-    }
-
-
     static Matrix32 push_matrix(u32 width, u32 height, MemoryBuffer<f32>& buffer)
     {
         Matrix32 mat{};
@@ -75,57 +28,102 @@ namespace nn
     }
 
 
+    static inline Span32 activation_span(IO const& io)
+    {
+        Span32 span{};
+        span.data = io.activation;
+        span.length = io.length;
+
+        return span;
+    }
+    
+    
     static void eval_forward(Layer const& layer)
     {
-        auto& in = layer.act_in;
-        auto& weights = layer.weights;
-        auto& bias = layer.bias;
-        auto& out = layer.act_out;
+        auto input = layer.io_front;
+        auto output = layer.io_back;
 
-        auto in_len = in.length;
-        auto out_len = out.length;
-
-        for (u32 o = 0; o < out_len; o++)
+        auto a_in = activation_span(input);
+        
+        for (u32 o = 0; o < output.length; o++)
         {
-            auto w = row_span(weights, o);
+            auto w = row_span(layer.weights, o);            
 
-            auto sum = span::dot(in, w) + bias.data[o];
+            auto sum = span::dot(w, a_in) + input.bias[o];
 
-            out.data[o] = sum > 0.0f ? sum : 0.0f;
+            output.activation[o] = sum > 0.0f ? sum : 0.0f;
         }
     }
 
 
     static void update_back(Layer const& layer)
     {
-        auto& in = layer.act_in;
-        auto& weights = layer.weights;
-        auto& bias = layer.bias;
-        auto& error_in = layer.error_in;
-        auto& error_out = layer.error_out;
-
-        auto in_len = in.length;
-        auto out_len = error_out.length;
+        auto input = layer.io_back;
+        auto output = layer.io_front;
 
         f32 eta = 0.15f;
 
-        for (u32 i = 0; i < in_len; i++)
+        for (u32 o = 0; o < output.length; o++)
         {
-            error_in.data[i] = 0.0f;
-            if (in.data[i] <= 0.0f)
+            auto a_out = output.activation[o];
+            if (a_out <= 0.0f)
             {
                 continue;
             }
-            
-            for (u32 o = 0; o < out_len; o++)
+
+            auto& e_out = output.error[o];
+            auto& b_out = output.bias[o];
+
+            e_out = 0.0f;
+            for (u32 i = 0; i < input.length; i++)
             {
-                auto w = row_span(weights, o);
-                error_in.data[i] += error_out.data[o] * w.data[i];
-                w.data[i] -= eta * error_out.data[o] * in.data[i];
+                auto& w = row_span(layer.weights, i).data[o];
+                auto e_in = input.error[i];
+
+                e_out += e_in * w;
+                w -= eta * e_in * a_out;
             }
 
-            bias.data[i] -= eta * error_in.data[i];
+            b_out -= eta * e_out;
         }
+    }
+
+
+    static u32 net_element_count(NetTopology const& topology)
+    {
+        auto N = topology.n_layers;
+        auto sizes = topology.layer_sizes;
+
+        u32 n_activation = 0;
+        u32 n_bias = 0;
+        u32 n_error = 0;
+        u32 n_weights = 0;
+
+        // input layer
+        auto n0 = sizes[0];
+        auto n1 = sizes[1];
+
+        n_activation += n0;
+        n_weights += n0 * n1;
+        n_bias += n1;
+        n_activation += n1;
+        n_error += n1;
+
+        for (u32 i = 1; i < N - 1; i++)
+        {
+            n0 = sizes[i];
+            n1 = sizes[i + 1];
+
+            n_weights += n0 * n1;
+            n_bias += n1;
+            n_activation += n1;
+            n_error += n1;
+        }
+
+        return n_activation +
+            n_weights + 
+            n_bias + 
+            n_error;
     }
 }
 
@@ -133,57 +131,68 @@ namespace nn
 namespace nn
 {
     void create(Net& net, NetTopology const& topology)
-    {   
-        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
-        auto size_span = to_span(topology, size_data);
-
+    { 
         auto& buffer = net.memory;
-        if (!mb::create_buffer(buffer, net_element_count(size_span), "mlp"))
+        if (!mb::create_buffer(buffer, net_element_count(topology), "mlp"))
         {
 
         }
 
         span::fill_32(span::make_view(buffer), 0.5f);
 
-        auto N = size_span.length - 1;
-        auto sizes = size_span.data;
+        auto N = topology.n_layers;
+        auto sizes = topology.layer_sizes;
 
-        net.layers.length = N;
+        net.layers.length = N - 1;
+        net.layers.data = net.layer_data;
 
-        auto layers = net.layers.data;
+        auto& layers = net.layers.data;        
 
-        u32 size32 = 0;
-
+        // input layer
         assert(sizes[0] > 0);
+        auto n0 = sizes[0];
+        auto n1 = sizes[1];
 
-        for (u32 i = 0; i < N; i++)
-        {        
-            auto& layer = layers[i];
+        {
+            auto& layer = layers[0];
+
+            layer.io_front.length = n0;
+            layer.io_front.activation = mb::push_elements(buffer, n0);
+            layer.io_front.bias = 0;
+            layer.io_front.error = 0;
+
+            layer.io_back.length = n1;
+            layer.io_back.activation = mb::push_elements(buffer, n1);
+            layer.io_back.bias = mb::push_elements(buffer, n1);
+            layer.io_back.error = mb::push_elements(buffer, n1);
+
+            layer.weights = push_matrix(n0, n1, buffer);
+        }
+
+        for (u32 i = 1; i < N - 1; i++)
+        {
             assert(sizes[i] > 0);
 
-            if (i == 0)
-            {
-                layer.act_in = span::push_span(buffer, sizes[0]);
-                layer.error_in = span::push_span(buffer, sizes[0]);
-            }
-            else
-            {
-                auto& prev = layers[i - 1];
+            n0 = sizes[i];
+            n1 = sizes[i + 1];
 
-                layer.act_in = prev.act_out;
-                layer.error_in = prev.error_in;
-            }
+            auto& layer = layers[i];
 
-            layer.act_out = span::push_span(buffer, sizes[i + 1]);
-            layer.error_out = span::push_span(buffer, sizes[i + 1]);
+            layer.io_front.activation = layers[i - 1].io_back.activation;
+            layer.io_front.bias = layers[i - 1].io_back.bias;
+            layer.io_front.error = layers[i - 1].io_back.error;
 
-            layer.weights = push_matrix(layer.act_in.length, layer.act_out.length, buffer);
-            layer.bias = span::push_span(buffer, layer.act_in.length);
+            layer.io_back.length = n1;
+            layer.io_back.activation = mb::push_elements(buffer, n1);
+            layer.io_back.bias = mb::push_elements(buffer, n1);
+            layer.io_back.error = mb::push_elements(buffer, n1);
+
+            layer.weights = push_matrix(n0, n1, buffer);
         }
         
-        net.input = layers[0].act_in;
-        net.output = layers[N - 1].act_out;
-        net.error = layers[N - 1].error_out;
+        net.input = span::to_span(layers[0].io_front.activation, layers[0].io_front.length);
+        net.output = span::to_span(layers[N - 1].io_back.activation, layers[N - 1].io_back.length);
+        net.error = span::to_span(layers[N - 1].io_back.error, layers[N - 1].io_back.length);
     }
 
 
@@ -220,9 +229,6 @@ namespace nn
 
     u32 mlp_bytes(NetTopology const& topology)
     {
-        u32 size_data[NetTopology::MAX_LAYERS + 2] = { 0 };
-        auto size_span = to_span(topology, size_data);
-
-        return net_element_count(size_span) * sizeof(f32);
+        return net_element_count(topology) * sizeof(f32);
     }
 }
