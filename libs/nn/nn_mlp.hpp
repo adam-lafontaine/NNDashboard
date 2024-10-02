@@ -32,23 +32,40 @@ namespace nn
     };
 
 
+    struct TopologyIndex
+    {
+        u8 value;
+    };
+
+
     class NetTopology
     {
     public:
         constexpr static u32 MAX_INNER_LAYERS = 16;
         constexpr static u32 MAX_LAYERS = 1 + MAX_INNER_LAYERS + 1;
 
+    private:
         u32 n_layers = 2;
 
-        u32 layer_sizes[MAX_LAYERS] = { 0 };
+        u32 layer_data[MAX_LAYERS] = { 0 };
+        u32* inner_layer_data = layer_data + 1;
 
-        u32 get_input_size() { return layer_sizes[0]; }
+    
+    public:        
 
-        u32 get_output_size() { return layer_sizes[n_layers - 1]; }
+        u32 get_input_size() { return layer_data[0]; }
 
-        void set_input_size(u32 size) { layer_sizes[0] = size; }
+        u32 get_output_size() { return layer_data[n_layers - 1]; }
 
-        void set_output_size(u32 size) { layer_sizes[n_layers - 1] = size; }
+        void set_input_size(u32 size) { layer_data[0] = size; }
+
+        void set_output_size(u32 size) { layer_data[n_layers - 1] = size; }
+
+        void set_inner_size_at(u32 size, TopologyIndex inner_index) { inner_layer_data[inner_index.value] = size; }
+
+        void set_inner_layers(u32 inner_layers) { auto s = get_output_size(); n_layers = inner_layers + 2; set_output_size(s); }
+
+        SpanView<u32> to_span() { return span::to_span(layer_data, n_layers); }
     };
 
 
@@ -76,7 +93,7 @@ namespace nn
     }
 
 
-    void create(Net& net, NetTopology const& layer_sizes);
+    void create(Net& net, NetTopology layer_sizes);
 
     void eval(Net const& net, Span32 const& input);
 

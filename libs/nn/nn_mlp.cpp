@@ -89,10 +89,12 @@ namespace nn
     }
 
 
-    static u32 net_element_count(NetTopology const& topology)
+    static u32 net_element_count(NetTopology topology)
     {
-        auto N = topology.n_layers;
-        auto sizes = topology.layer_sizes;
+        auto span = topology.to_span();
+
+        auto N = span.length;
+        auto sizes = span.data;
 
         u32 n_activation = 0;
         u32 n_bias = 0;
@@ -130,7 +132,7 @@ namespace nn
 
 namespace nn
 {
-    void create(Net& net, NetTopology const& topology)
+    void create(Net& net, NetTopology topology)
     { 
         auto& buffer = net.memory;
         if (!mb::create_buffer(buffer, net_element_count(topology), "mlp"))
@@ -140,8 +142,10 @@ namespace nn
 
         span::fill_32(span::make_view(buffer), 0.5f);
 
-        auto N = topology.n_layers;
-        auto sizes = topology.layer_sizes;
+        auto const span = topology.to_span();
+
+        auto N = span.length;
+        auto sizes = span.data;
 
         net.layers.length = N - 1;
         net.layers.data = net.layer_data;

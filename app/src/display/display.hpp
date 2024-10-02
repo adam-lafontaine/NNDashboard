@@ -372,10 +372,10 @@ namespace display
         constexpr int layer_size_default = 16;
 
         
-        static int n_layers = layer_size_min;
-        static int layers[N] = { 0 };
+        static int n_inner_layers = layer_size_min;
+        static int inner_layers[N] = { 0 };
 
-        ImGui::SliderInt("Inner layers", &n_layers, 1, (int)N);
+        ImGui::SliderInt("Inner layers", &n_inner_layers, 1, (int)N);
 
         ImGui::Text("%u", topology.get_input_size());
         ImGui::SameLine();
@@ -385,10 +385,10 @@ namespace display
             ImGui::BeginDisabled();
         }
 
-        for (u32 i = 0; i < topology.n_layers; i++)
+        for (int i = 0; i < n_inner_layers; i++)
         {
-            layers[i] = layers[i] ? num::max(layer_size_min, layers[i]) : layer_size_default;
-            ImGui::VSliderInt(layer_labels[i], ImVec2(18, 160), layers + i, layer_size_min, layer_size_max);
+            inner_layers[i] = inner_layers[i] ? num::max(layer_size_min, inner_layers[i]) : layer_size_default;
+            ImGui::VSliderInt(layer_labels[i], ImVec2(18, 160), inner_layers + i, layer_size_min, layer_size_max);
             ImGui::SameLine();
         }
 
@@ -399,10 +399,11 @@ namespace display
 
         ImGui::Text("%u", topology.get_output_size());
 
-        topology.n_layers = (u32)n_layers;
-        for (u32 i = 0; i < topology.n_layers; i++)
+        topology.set_inner_layers((u32)n_inner_layers);
+        
+        for (int i = 0; i < n_inner_layers; i++)
         {
-            topology.layer_sizes[i] = (u32)layers[i];
+            topology.set_inner_size_at((u32)inner_layers[i], { u8(i) });
         }
 
         ImGui::Text("Bytes: %u", nn::mlp_bytes(topology));
