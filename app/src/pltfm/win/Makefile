@@ -165,7 +165,9 @@ nn_mlp_c := $(nn)/nn_mlp.cpp
 mlai := $(src)/mlai
 
 mlai_h := $(mlai)/mlai.hpp
+
 mlai_c := $(mlai)/mlai.cpp
+mlai_c += $(numeric_h)
 
 #************
 

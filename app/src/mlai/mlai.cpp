@@ -1,10 +1,14 @@
 #pragma once
 
 #include "mlai.hpp"
+#include "../../../libs/util/numeric.hpp"
 
 
 namespace mlai
 {
+    namespace num = numeric;
+
+
     static u32 increment_wrap(u32 value, u32 max_value)
     {
         value += 1;
@@ -53,7 +57,15 @@ namespace mlai
             auto input = mnist::data_at(data, data_id);
             auto expected = mnist::data_at(labels, data_id);
             
-            nn::update(mlp, input, expected);
+            //nn::update(mlp, input, expected);
+
+            f32 e = 0.5f;
+            for (u32 i = 0; i < mlp.error.length; i++)
+            {
+                e += num::abs(mlp.error.data[i]);
+            }
+
+            state.train_error = e / mlp.error.length;
 
             data_id = increment_wrap(data_id, data_count - 1);
         }

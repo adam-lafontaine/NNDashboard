@@ -42,30 +42,48 @@ namespace nn
     {
     public:
         constexpr static u32 MAX_INNER_LAYERS = 16;
-        constexpr static u32 MAX_LAYERS = 1 + MAX_INNER_LAYERS + 1;
+        constexpr static u32 MAX_LAYERS = 1 + MAX_INNER_LAYERS + 1;        
 
     private:
-        u32 n_layers = 2;
+        u32 input_size = 1;
+        u32 output_size = 1;
 
-        u32 layer_data[MAX_LAYERS] = { 0 };
-        u32* inner_layer_data = layer_data + 1;
+        u32 n_inner_layers = 1;
+        
+        u32 inner_layer_data[MAX_INNER_LAYERS] = { 0 };
+
+        u32 span_data[MAX_LAYERS] = { 0 };
 
     
     public:        
 
-        u32 get_input_size() { return layer_data[0]; }
+        u32 get_input_size() { return input_size; }
 
-        u32 get_output_size() { return layer_data[n_layers - 1]; }
+        u32 get_output_size() { return output_size; }
 
-        void set_input_size(u32 size) { layer_data[0] = size; }
+        void set_input_size(u32 size) { input_size = size; }
 
-        void set_output_size(u32 size) { layer_data[n_layers - 1] = size; }
+        void set_output_size(u32 size) { output_size = size; }
+
+        u32 get_inner_size_at(TopologyIndex inner_index) { return inner_layer_data[inner_index.value]; }
 
         void set_inner_size_at(u32 size, TopologyIndex inner_index) { inner_layer_data[inner_index.value] = size; }
 
-        void set_inner_layers(u32 inner_layers) { auto s = get_output_size(); n_layers = inner_layers + 2; set_output_size(s); }
+        u32 get_inner_layers() { return n_inner_layers; }
+        
+        void set_inner_layers(u32 inner_layers) { n_inner_layers = inner_layers; }
 
-        SpanView<u32> to_span() { return span::to_span(layer_data, n_layers); }
+        /*SpanView<u32> to_span() 
+        { 
+            auto span = span::to_span(span_data, n_inner_layers + 2);
+            span.data[0] = input_size;
+            span.data[span.length - 1] = output_size;
+            for (u32 i = 1; i < span.length - 1; i++)
+            {
+                span.data[i] = inner_layer_data[i - 1];
+            }
+            return span;
+        }*/
     };
 
 

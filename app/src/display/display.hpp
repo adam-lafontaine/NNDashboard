@@ -474,7 +474,58 @@ namespace display
 
     static void train_window(DisplayState& state)
     {
+        auto& mlp = state.ai_state.mlp;
 
+        auto start_disabled = !mlp.memory.ok || state.ai_status == MLStatus::Training;
+        auto stop_disabled = state.ai_status != MLStatus::Training;
+
+        ImGui::Begin("Train");
+
+        if (start_disabled) { ImGui::BeginDisabled(); }
+
+        if (ImGui::Button("Start"))
+        {
+            internal::start_ai_training_async(state);
+        }
+
+        if (start_disabled) { ImGui::EndDisabled(); }
+
+        ImGui::SameLine();
+
+        if (stop_disabled) { ImGui::BeginDisabled(); }
+
+        if (ImGui::Button("Stop"))
+        {
+            internal::stop_ai_training(state);
+        }
+
+        if (stop_disabled) { ImGui::EndDisabled(); }
+
+        constexpr int data_count = 256;
+        constexpr f32 plot_min = 0.0f;
+        constexpr f32 plot_max = 1.0f;
+        constexpr auto plot_size = ImVec2(0, 80.0f);
+        constexpr auto data_stride = sizeof(f32);
+
+        static f32 plot_data[data_count] = { 0 };
+        static u8 data_offset = 0;
+
+        cstr overlay = "";
+
+        plot_data[data_offset++] = state.ai_state.train_error;
+
+        ImGui::PlotLines("##ErrorPlot", 
+            plot_data, 
+            data_count, 
+            (int)data_offset,
+            overlay,
+            plot_min, plot_max,
+            plot_size,
+            data_stride);
+        
+        ImGui::Text("%u", state.ai_state.mlp.output.length);
+
+        ImGui::End();
     }
 }
 
@@ -486,5 +537,6 @@ namespace display
         status_window(state);
         inspect_data_window(state);
         topology_window(state);
+        train_window(state);
     }
 }

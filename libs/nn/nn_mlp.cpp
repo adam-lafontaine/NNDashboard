@@ -93,36 +93,48 @@ namespace nn
 
     static u32 net_element_count(NetTopology topology)
     {
-        auto span = topology.to_span();
-
-        auto N = span.length;
-        auto sizes = span.data;
+        auto N = topology.get_inner_layers();
+        
 
         u32 n_activation = 0;
         u32 n_bias = 0;
         u32 n_error = 0;
         u32 n_weights = 0;
-
+        
         // input layer
-        auto n0 = sizes[0];
-        auto n1 = sizes[1];
+        nn::TopologyIndex t_id = { (u8)0 };
+        auto len_front = topology.get_input_size();
+        auto len_back = topology.get_inner_size_at(t_id);
 
-        n_activation += n0;
-        n_weights += n0 * n1;
-        n_bias += n1;
-        n_activation += n1;
-        n_error += n1;
+        n_activation += len_front;
 
-        for (u32 i = 1; i < N - 1; i++)
+        n_weights += len_front * len_back;
+        n_bias += len_back;
+        n_activation += len_back;
+        n_error += len_back;
+
+        // inner layers
+        for (u32 i = 0; i < N; i++)
         {
-            n0 = sizes[i];
-            n1 = sizes[i + 1];
+            len_front = len_back;
+            len_back = topology.get_inner_size_at(t_id);
 
-            n_weights += n0 * n1;
-            n_bias += n1;
-            n_activation += n1;
-            n_error += n1;
+            t_id.value++;
+
+            n_weights += len_front * len_back;
+            n_bias += len_back;
+            n_activation += len_back;
+            n_error += len_back;
         }
+
+        // output layer
+        len_front = len_back;
+        len_back = topology.get_output_size();
+
+        n_weights += len_front * len_back;
+        n_bias += len_back;
+        n_activation += len_back;
+        n_error += len_back;
 
         return n_activation +
             n_weights + 
@@ -169,61 +181,79 @@ namespace nn
 
         span::fill_32(span::make_view(buffer), 0.5f);
 
-        auto const span = topology.to_span();
+        net.layers.data = net.layer_data;        
+        auto& layers = net.layers.data;
 
-        auto N = span.length;
-        auto sizes = span.data;
-
-        net.layers.length = N - 1;
-        net.layers.data = net.layer_data;
-
-        auto& layers = net.layers.data;        
+        auto N = topology.get_inner_layers();
+        net.layers.length = N + 2;
 
         // input layer
-        assert(sizes[0] > 0);
-        auto n0 = sizes[0];
-        auto n1 = sizes[1];
-
+        nn::TopologyIndex t_id = { (u8)0 };
+        auto len_front = topology.get_input_size();
+        auto len_back = topology.get_inner_size_at(t_id);
         {
             auto& layer = layers[0];
 
-            layer.io_front.length = n0;
-            layer.io_front.activation = mb::push_elements(buffer, n0);
+            layer.io_front.length = len_front;
+            layer.io_front.activation = mb::push_elements(buffer, len_front);
             layer.io_front.bias = 0;
             layer.io_front.error = 0;
 
-            layer.io_back.length = n1;
-            layer.io_back.activation = mb::push_elements(buffer, n1);
-            layer.io_back.bias = mb::push_elements(buffer, n1);
-            layer.io_back.error = mb::push_elements(buffer, n1);
+            layer.io_back.length = len_back;
+            layer.io_back.activation = mb::push_elements(buffer, len_back);
+            layer.io_back.bias = mb::push_elements(buffer, len_back);
+            layer.io_back.error = mb::push_elements(buffer, len_back);
 
-            layer.weights = push_matrix(n0, n1, buffer);
+            layer.weights = push_matrix(len_front, len_back, buffer);
+
+            net.input = span::to_span(layer.io_front.activation, len_front);
         }
 
-        for (u32 i = 1; i < N - 1; i++)
+        // inner layers        
+        u32 layer_id = 1;
+        for (u32 i = 0; i < N; i++)
+        { 
+            auto& layer = layers[layer_id];
+
+            layer.io_front = layers[layer_id - 1].io_back;
+
+            len_front = layer.io_front.length;
+            len_back = topology.get_inner_size_at(t_id);
+            
+            layer.io_back.length = len_back;
+            layer.io_back.activation = mb::push_elements(buffer, len_back);
+            layer.io_back.bias = mb::push_elements(buffer, len_back);
+            layer.io_back.error = mb::push_elements(buffer, len_back);
+
+            layer.weights = push_matrix(len_front, len_back, buffer);
+
+            ++layer_id;
+            t_id.value++;
+        }
+
+        assert(layer_id == net.layers.length - 1);
+
+        // output layer
         {
-            assert(sizes[i] > 0);
+            auto& layer = layers[layer_id];
 
-            n0 = sizes[i];
-            n1 = sizes[i + 1];
+            layer.io_front = layers[layer_id - 1].io_back;
 
-            auto& layer = layers[i];
+            len_front = layer.io_front.length;
+            len_back = topology.get_output_size();
 
-            layer.io_front = layers[i - 1].io_back;
+            layer.io_back.length = len_back;
+            layer.io_back.activation = mb::push_elements(buffer, len_back);
+            layer.io_back.bias = mb::push_elements(buffer, len_back);
+            layer.io_back.error = mb::push_elements(buffer, len_back);
 
-            layer.io_back.length = n1;
-            layer.io_back.activation = mb::push_elements(buffer, n1);
-            layer.io_back.bias = mb::push_elements(buffer, n1);
-            layer.io_back.error = mb::push_elements(buffer, n1);
+            layer.weights = push_matrix(len_front, len_back, buffer);
 
-            layer.weights = push_matrix(n0, n1, buffer);
+            net.output = span::to_span(layer.io_back.activation, len_back);
+            net.error = span::to_span(layer.io_back.error, len_back);
         }
 
         assert(buffer.capacity_ - buffer.size_ == 0);
-        
-        net.input = span::to_span(layers[0].io_front.activation, layers[0].io_front.length);
-        net.output = span::to_span(layers[N - 1].io_back.activation, layers[N - 1].io_back.length);
-        net.error = span::to_span(layers[N - 1].io_back.error, layers[N - 1].io_back.length);
     }
 
 
