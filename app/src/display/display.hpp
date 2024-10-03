@@ -207,11 +207,23 @@ namespace display
     {
         using LS = LoadStatus;
 
+        auto is_disabled = state.ai_load_status == LS::Loaded;
+
         ImGui::Begin("Status");
+
+        if (is_disabled)
+        {
+            ImGui::BeginDisabled();
+        }
 
         if (ImGui::Button("Load Data") && state.ai_load_status == LS::NotLoaded)
         {
             internal::load_ai_data_async(state);            
+        }
+
+        if (is_disabled)
+        {
+            ImGui::EndDisabled();
         }
 
         cstr msg = "";
@@ -408,11 +420,23 @@ namespace display
 
         ImGui::Text("Bytes: %u", nn::mlp_bytes(topology));
 
-        if (state.ai_load_status == LoadStatus::Loaded && !is_disabled)
+        if (state.ai_load_status == LoadStatus::Loaded)
         {
+            if (is_disabled)
+            {
+                ImGui::BeginDisabled();
+            }
+
             if (ImGui::Button("Create"))
             {
                 nn::create(mlp, topology);
+            }
+
+            if (is_disabled)
+            {
+                ImGui::EndDisabled();
+                ImGui::SameLine();
+                ImGui::Text("OK");
             }
         }
 
