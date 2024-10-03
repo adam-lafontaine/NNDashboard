@@ -153,6 +153,12 @@ namespace nn
 
 namespace nn
 {
+    u32 mlp_bytes(NetTopology const& topology)
+    {
+        return net_element_count(topology) * sizeof(f32);
+    }
+
+
     void create(Net& net, NetTopology topology)
     { 
         auto& buffer = net.memory;
@@ -251,11 +257,5 @@ namespace nn
             auto& layer = net.layers.data[N - 1 - i];
             update_back(layer);
         }
-    }
-
-
-    u32 mlp_bytes(NetTopology const& topology)
-    {
-        return net_element_count(topology) * sizeof(f32);
     }
 }

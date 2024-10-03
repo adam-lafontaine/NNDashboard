@@ -156,7 +156,7 @@ namespace mnist
     }
 
 
-    SpanView<f32> input_at(ImageData const& data, u32 index)
+    SpanView<f32> data_at(ImageData const& data, u32 index)
     {
         auto span = span::make_view(data.input_buffer);
 
@@ -175,7 +175,7 @@ namespace mnist
     }
 
 
-    SpanView<f32> output_at(LabelData const& data, u32 index)
+    SpanView<f32> data_at(LabelData const& data, u32 index)
     {
         auto span = span::make_view(data.output_buffer);
 

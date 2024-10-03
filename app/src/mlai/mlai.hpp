@@ -3,9 +3,14 @@
 #include "../../../libs/mnist/mnist.hpp"
 #include "../../../libs/nn/nn_mlp.hpp"
 
+#include <functional>
+
 
 namespace mlai
 {
+    using bool_f = std::function<bool()>;
+
+
     class AI_State
     {
     public:
@@ -36,4 +41,6 @@ namespace mlai
     bool load_data(AI_State& state, DataFiles files);
 
     void destroy(AI_State& state);
+
+    void train(AI_State& state, bool_f const& train_condition);
 }

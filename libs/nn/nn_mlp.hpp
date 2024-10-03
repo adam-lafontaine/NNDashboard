@@ -93,11 +93,11 @@ namespace nn
     }
 
 
-    void create(Net& net, NetTopology layer_sizes);
+    u32 mlp_bytes(NetTopology const& topology);
+
+    void create(Net& net, NetTopology topology);
 
     void eval(Net const& net, Span32 const& input);
 
     void update(Net const& net, Span32 const& input, Span32 const& expected);
-
-    u32 mlp_bytes(NetTopology const& topology);
 }

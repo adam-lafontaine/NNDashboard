@@ -14,7 +14,7 @@ namespace num = numeric;
 
 namespace display
 {
-    enum class LoadStatus : u8
+    enum class DataStatus : u8
     {
         NotLoaded = 0,
         InProgress,
@@ -23,11 +23,19 @@ namespace display
     };
 
 
+    enum class MLStatus : u8
+    {
+        None = 0,
+        Training
+    };
+
+
     class DisplayState
     {
     public:
 
-        LoadStatus ai_load_status = LoadStatus::NotLoaded;
+        DataStatus ai_data_status = DataStatus::NotLoaded;
+        MLStatus ai_status = MLStatus::None;
 
         mlai::AI_State ai_state{};
 
@@ -81,6 +89,35 @@ namespace internal
     }
 
 
+    template <u32 N>
+    class ImGuiLabelArray
+    {
+    public:
+        char labels[N][32] = { 0 };
+    };
+
+
+    template <u32 N>
+    constexpr static ImGuiLabelArray<N> make_imgui_labels(cstr base)
+    {
+        ImGuiLabelArray<N> labels{};
+
+        auto len = span::strlen(base);
+
+        for (u32 i = 0; i < N; i++)
+        {
+            auto dst = labels.labels[i];
+            for (u32 b = 0; b < len; b++)
+            {
+                dst[b] = base[b];
+            }
+            dst[len] = 'A' + i;
+        }
+
+        return labels;
+    }
+
+
     static bool create_input_display(DisplayState& state)
     {
         auto wd = state.ai_state.test_data.image_width; // 17
@@ -122,8 +159,8 @@ namespace internal
             return false;
         }
 
-        state.topology.set_input_size(mnist::input_at(ai.test_data, 0).length);
-        state.topology.set_output_size(mnist::output_at(ai.test_labels, 0).length);
+        state.topology.set_input_size(mnist::data_at(ai.test_data, 0).length);
+        state.topology.set_output_size(mnist::data_at(ai.test_labels, 0).length);
 
         return true;
     }
@@ -131,15 +168,15 @@ namespace internal
     
     static void load_ai_data_async(DisplayState& state)
     {
-        using LS = LoadStatus;
+        using DS = DataStatus;
 
         auto const load = [&]()
         {
-            state.ai_load_status = LS::InProgress;
+            state.ai_data_status = DS::InProgress;
             auto ok = load_data(state);
             ok &= create_input_display(state);
 
-            state.ai_load_status = ok ? LS::Loaded : LS::Fail;
+            state.ai_data_status = ok ? DS::Loaded : DS::Fail;
         };
 
         std::thread th(load);
@@ -196,6 +233,29 @@ namespace internal
         ImGui::Text(" count: %u", data.label_count);
     }
 
+
+    static void start_ai_training(DisplayState& state)
+    {
+        state.ai_status = MLStatus::Training;
+
+        auto const condition = [&](){ return state.ai_status == MLStatus::Training; };
+
+        mlai::train(state.ai_state, condition);
+    }
+
+
+    static void start_ai_training_async(DisplayState& state)
+    {
+        std::thread th([&](){ start_ai_training(state); });
+        th.detach();
+    }
+
+
+    static void stop_ai_training(DisplayState& state)
+    {
+        state.ai_status = MLStatus::None;
+    }
+
 } // internal
 
 } // display
@@ -203,11 +263,11 @@ namespace internal
 
 namespace display
 {
-    inline void status_window(DisplayState& state)
+    static void status_window(DisplayState& state)
     {
-        using LS = LoadStatus;
+        using DS = DataStatus;
 
-        auto is_disabled = state.ai_load_status == LS::Loaded;
+        auto is_disabled = state.ai_data_status == DS::Loaded;
 
         ImGui::Begin("Status");
 
@@ -216,7 +276,7 @@ namespace display
             ImGui::BeginDisabled();
         }
 
-        if (ImGui::Button("Load Data") && state.ai_load_status == LS::NotLoaded)
+        if (ImGui::Button("Load Data") && state.ai_data_status == DS::NotLoaded)
         {
             internal::load_ai_data_async(state);            
         }
@@ -227,17 +287,17 @@ namespace display
         }
 
         cstr msg = "";
-        switch (state.ai_load_status)
+        switch (state.ai_data_status)
         {
-        case LS::Fail:
+        case DS::Fail:
             msg = "ERROR";
             break;
 
-        case LS::InProgress:
+        case DS::InProgress:
             msg = "Loading...";
             break;
 
-        case LS::Loaded:
+        case DS::Loaded:
             msg = "OK";
             break;
 
@@ -275,14 +335,14 @@ namespace display
     }
     
     
-    inline void inspect_data_window(DisplayState& state)
+    static void inspect_data_window(DisplayState& state)
     {
         ImGui::Begin("Inspect");
 
         auto w = state.input_image.width;
         auto h = state.input_image.height;
 
-        if (state.ai_load_status != LoadStatus::Loaded)
+        if (state.ai_data_status != DataStatus::Loaded)
         {
             // empty image
             ImGui::Image(state.input_texture, ImVec2(w, h));
@@ -331,43 +391,11 @@ namespace display
     }
 
 
-    
-
-
-    template <u32 N>
-    class ImGuiLabelArray
-    {
-    public:
-        char labels[N][32] = { 0 };
-    };
-
-
-    template <u32 N>
-    constexpr static ImGuiLabelArray<N> make_imgui_labels(cstr base)
-    {
-        ImGuiLabelArray<N> labels{};
-
-        auto len = span::strlen(base);
-
-        for (u32 i = 0; i < N; i++)
-        {
-            auto dst = labels.labels[i];
-            for (u32 b = 0; b < len; b++)
-            {
-                dst[b] = base[b];
-            }
-            dst[len] = 'A' + i;
-        }
-
-        return labels;
-    }
-
-
-    inline void topology_window(DisplayState& state)
+    static void topology_window(DisplayState& state)
     {
         constexpr auto N = nn::NetTopology::MAX_INNER_LAYERS;
 
-        constexpr auto layer_labels_array = make_imgui_labels<N>("##LayerLabels");
+        constexpr auto layer_labels_array = internal::make_imgui_labels<N>("##LayerLabels");
 
         auto layer_labels = layer_labels_array.labels;
 
@@ -420,7 +448,7 @@ namespace display
 
         ImGui::Text("Bytes: %u", nn::mlp_bytes(topology));
 
-        if (state.ai_load_status == LoadStatus::Loaded)
+        if (state.ai_data_status == DataStatus::Loaded)
         {
             if (is_disabled)
             {
@@ -441,6 +469,12 @@ namespace display
         }
 
         ImGui::End();
+    }
+
+
+    static void train_window(DisplayState& state)
+    {
+
     }
 }
 
