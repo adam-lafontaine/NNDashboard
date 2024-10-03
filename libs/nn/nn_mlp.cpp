@@ -2,6 +2,8 @@
 
 #include "nn_mlp.hpp"
 
+#include <cmath>
+
 
 namespace nn
 {
@@ -127,6 +129,25 @@ namespace nn
             n_bias + 
             n_error;
     }
+
+
+    static void softmax(Span32 const& span)
+    {
+        f32 total = 0.0f;
+
+        for (u32 i = 0; i < span.length; i++)
+        {
+            span.data[i] = std::exp(span.data[i]);
+            total += span.data[i];
+        }
+
+        auto f = total <= 0.0f ? 0.0f : 1.0f / total;
+
+        for (u32 i = 0; i < span.length; i++)
+        {
+            span.data[i] *= f;
+        }
+    }
 }
 
 
@@ -137,7 +158,7 @@ namespace nn
         auto& buffer = net.memory;
         if (!mb::create_buffer(buffer, net_element_count(topology), "mlp"))
         {
-
+            assert("*** mlp buffer failed ***" && false);
         }
 
         span::fill_32(span::make_view(buffer), 0.5f);
@@ -182,9 +203,7 @@ namespace nn
 
             auto& layer = layers[i];
 
-            layer.io_front.activation = layers[i - 1].io_back.activation;
-            layer.io_front.bias = layers[i - 1].io_back.bias;
-            layer.io_front.error = layers[i - 1].io_back.error;
+            layer.io_front = layers[i - 1].io_back;
 
             layer.io_back.length = n1;
             layer.io_back.activation = mb::push_elements(buffer, n1);
@@ -193,6 +212,8 @@ namespace nn
 
             layer.weights = push_matrix(n0, n1, buffer);
         }
+
+        assert(buffer.capacity_ - buffer.size_ == 0);
         
         net.input = span::to_span(layers[0].io_front.activation, layers[0].io_front.length);
         net.output = span::to_span(layers[N - 1].io_back.activation, layers[N - 1].io_back.length);
@@ -208,6 +229,8 @@ namespace nn
         {
             eval_forward(net.layers.data[i]);
         }
+
+        softmax(net.output);
     }
 
 

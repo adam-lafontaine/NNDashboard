@@ -36,7 +36,4 @@ namespace mlai
     bool load_data(AI_State& state, DataFiles files);
 
     void destroy(AI_State& state);
-
-
-
 }
