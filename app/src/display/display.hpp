@@ -26,7 +26,8 @@ namespace display
     enum class MLStatus : u8
     {
         None = 0,
-        Training
+        Training,
+        Testing,
     };
 
 
@@ -254,6 +255,23 @@ namespace internal
     static void stop_ai_training(DisplayState& state)
     {
         state.ai_status = MLStatus::None;
+    }
+
+
+    static void run_ai_test(DisplayState& state)
+    {
+        state.ai_status = MLStatus::Testing;
+        
+        mlai::test(state.ai_state);
+
+        state.ai_status = MLStatus::None;
+    }
+
+
+    static void run_ai_test_async(DisplayState& state)
+    {
+        std::thread th([&](){ run_ai_test(state); });
+        th.detach();
     }
 
 
@@ -522,15 +540,89 @@ namespace display
 
         static u8 data_offset = 0;
 
-        error_plot_data[data_offset] = ai.train_error;
+        if (state.ai_status == MLStatus::Training)
+        {
+            error_plot_data[data_offset] = ai.train_error;
 
-        total_pred_ok -= prediction_history[data_offset];
-        prediction_history[data_offset] = ai.prediction_ok;
-        total_pred_ok += prediction_history[data_offset];
+            total_pred_ok -= prediction_history[data_offset];
+            prediction_history[data_offset] = ai.prediction_ok;
+            total_pred_ok += prediction_history[data_offset];
 
-        prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;
+            prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;
 
-        ++data_offset;
+            ++data_offset;
+        }       
+
+        ImGui::PlotLines("##ErrorPlot", 
+            error_plot_data, 
+            data_count, 
+            (int)data_offset,
+            "Error",
+            plot_min, plot_max,
+            plot_size,
+            data_stride);
+        
+        ImGui::PlotLines("##PredictionPlot", 
+            prediction_plot_data, 
+            data_count, 
+            (int)data_offset,
+            "Predictions",
+            plot_min, plot_max,
+            plot_size,
+            data_stride);
+
+        ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
+        ImGui::Text("Epochs completed: %u", ai.epoch_id);
+
+        ImGui::End();
+    }
+
+
+    static void test_window(DisplayState& state)
+    {
+        auto& ai = state.ai_state;
+        auto& mlp = ai.mlp;
+
+        auto start_disabled = !mlp.memory.ok || state.ai_status == MLStatus::Testing;
+
+        ImGui::Begin("Test");
+
+        if (start_disabled) { ImGui::BeginDisabled(); }
+
+        if (ImGui::Button("Start"))
+        {
+            internal::run_ai_test_async(state);
+        }
+
+        if (start_disabled) { ImGui::EndDisabled(); }
+
+        constexpr int data_count = 256;
+        constexpr f32 plot_min = 0.0f;
+        constexpr f32 plot_max = 1.0f;
+        constexpr auto plot_size = ImVec2(0, 80.0f);
+        constexpr auto data_stride = sizeof(f32);
+
+        static f32 error_plot_data[data_count] = { 0 };
+
+        static u8 prediction_history[data_count] = { 0 };
+        static u32 total_pred_ok = 0;
+
+        static f32 prediction_plot_data[data_count] = { 0 };
+
+        static u8 data_offset = 0;
+
+        if (state.ai_status == MLStatus::Testing)
+        {
+            error_plot_data[data_offset] = ai.train_error;
+
+            total_pred_ok -= prediction_history[data_offset];
+            prediction_history[data_offset] = ai.prediction_ok;
+            total_pred_ok += prediction_history[data_offset];
+
+            prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;
+        
+            ++data_offset;
+        }
 
         ImGui::PlotLines("##ErrorPlot", 
             error_plot_data, 
@@ -550,10 +642,10 @@ namespace display
             plot_size,
             data_stride);
         
-        
-
-        ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
-        ImGui::Text("Epochs completed: %u", ai.epoch_id);
+        if (state.ai_status == MLStatus::Testing)
+        {
+            ImGui::Text("Data %u/%u", ai.data_id, ai.test_data.image_count);
+        }        
 
         ImGui::End();
     }
@@ -641,6 +733,7 @@ namespace display
         inspect_data_window(state);
         topology_window(state);
         train_window(state);
+        test_window(state);
 
         activation_window(state);
     }

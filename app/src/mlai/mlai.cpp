@@ -72,6 +72,33 @@ namespace mlai
     }
 
 
+    void test(AI_State& state)
+    {
+        auto& data = state.test_data;
+        auto& labels = state.test_labels;
+
+        u32 data_count = data.image_count;
+        state.data_id = 0;
+        state.epoch_id = 0;
+
+        auto& mlp = state.mlp;
+
+        for (u32 i = 0; i < data_count; i++)
+        {
+            state.data_id = i;
+            
+            auto input = mnist::data_at(data, state.data_id);
+            auto expected = mnist::data_at(labels, state.data_id);
+
+            nn::eval(mlp, input);
+
+            auto p = nn::prediction(mlp);
+
+            state.prediction_ok = p >= 0 && expected.data[p] > 0.5f;
+        }
+    }
+
+
     void eval_at(AI_State& state, u32 data_id)
     {
         auto& data = state.train_data;

@@ -48,6 +48,8 @@ namespace mlai
 
     void train(AI_State& state, bool_f const& train_condition);
 
+    void test(AI_State& state);
+
 
     void eval_at(AI_State& state, u32 data_id);
 }
