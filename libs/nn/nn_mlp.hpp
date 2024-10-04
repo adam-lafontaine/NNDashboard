@@ -106,6 +106,8 @@ namespace nn
 
     void eval(Net const& net, Span32 const& input);
 
+    void eval(Net const& net, Span32 const& input, Span32 const& expected);
+
     void update(Net const& net, Span32 const& input, Span32 const& expected);
 
     int prediction(Net const& net);

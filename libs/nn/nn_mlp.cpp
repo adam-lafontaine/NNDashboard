@@ -335,11 +335,17 @@ namespace nn
     }
 
 
-    void update(Net const& net, Span32 const& input, Span32 const& expected)
+    void eval(Net const& net, Span32 const& input, Span32 const& expected)
     {
         eval(net, input);
 
         span::sub(expected, net.output, net.error);
+    }
+
+
+    void update(Net const& net, Span32 const& input, Span32 const& expected)
+    {
+        eval(net, input, expected);
 
         auto N = net.layers.length;
 

@@ -59,8 +59,8 @@ namespace display
 
     inline bool init(DisplayState& state)
     {
-        u32 display_width = 480;
-        u32 display_height = 320;
+        u32 display_width = 360;
+        u32 display_height = 240;
 
         if (!img::create_image(state.input_image, display_width, display_height, "input_image"))
         {
@@ -252,7 +252,7 @@ namespace internal
     }
 
 
-    static void stop_ai_training(DisplayState& state)
+    static void stop_ai(DisplayState& state)
     {
         state.ai_status = MLStatus::None;
     }
@@ -261,8 +261,10 @@ namespace internal
     static void run_ai_test(DisplayState& state)
     {
         state.ai_status = MLStatus::Testing;
+
+        auto const condition = [&](){ return state.ai_status == MLStatus::Testing; };
         
-        mlai::test(state.ai_state);
+        mlai::test(state.ai_state, condition);
 
         state.ai_status = MLStatus::None;
     }
@@ -277,7 +279,7 @@ namespace internal
 
     static void reset_ai(DisplayState& state)
     {
-        stop_ai_training(state);
+        stop_ai(state);
         nn::destroy(state.ai_state.mlp);
     }
 
@@ -500,7 +502,7 @@ namespace display
         auto& ai = state.ai_state;
         auto& mlp = ai.mlp;
 
-        auto start_disabled = !mlp.memory.ok || state.ai_status == MLStatus::Training;
+        auto start_disabled = !mlp.memory.ok || state.ai_status != MLStatus::None;
         auto stop_disabled = state.ai_status != MLStatus::Training;
 
         ImGui::Begin("Train");
@@ -520,7 +522,7 @@ namespace display
 
         if (ImGui::Button("Stop"))
         {
-            internal::stop_ai_training(state);
+            internal::stop_ai(state);
         }
 
         if (stop_disabled) { ImGui::EndDisabled(); }
@@ -570,9 +572,12 @@ namespace display
             plot_min, plot_max,
             plot_size,
             data_stride);
-
-        ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
-        ImGui::Text("Epochs completed: %u", ai.epoch_id);
+        
+        if (state.ai_status == MLStatus::Training)
+        {
+            ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
+            ImGui::Text("Epochs completed: %u", ai.epoch_id);
+        }
 
         ImGui::End();
     }
@@ -584,6 +589,7 @@ namespace display
         auto& mlp = ai.mlp;
 
         auto start_disabled = !mlp.memory.ok || state.ai_status == MLStatus::Testing;
+        auto stop_disabled = state.ai_status != MLStatus::Testing;
 
         ImGui::Begin("Test");
 
@@ -595,6 +601,17 @@ namespace display
         }
 
         if (start_disabled) { ImGui::EndDisabled(); }
+
+        ImGui::SameLine();
+
+        if (stop_disabled) { ImGui::BeginDisabled(); }
+
+        if (ImGui::Button("Stop"))
+        {
+            internal::stop_ai(state);
+        }
+
+        if (stop_disabled) { ImGui::EndDisabled(); }
 
         constexpr int data_count = 256;
         constexpr f32 plot_min = 0.0f;
@@ -613,7 +630,7 @@ namespace display
 
         if (state.ai_status == MLStatus::Testing)
         {
-            error_plot_data[data_offset] = ai.train_error;
+            error_plot_data[data_offset] = ai.test_error;
 
             total_pred_ok -= prediction_history[data_offset];
             prediction_history[data_offset] = ai.prediction_ok;

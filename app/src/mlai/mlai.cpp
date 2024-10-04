@@ -72,7 +72,7 @@ namespace mlai
     }
 
 
-    void test(AI_State& state)
+    void test(AI_State& state, bool_f const& test_condition)
     {
         auto& data = state.test_data;
         auto& labels = state.test_labels;
@@ -83,18 +83,20 @@ namespace mlai
 
         auto& mlp = state.mlp;
 
-        for (u32 i = 0; i < data_count; i++)
+        while (test_condition())
         {
-            state.data_id = i;
-            
             auto input = mnist::data_at(data, state.data_id);
             auto expected = mnist::data_at(labels, state.data_id);
 
-            nn::eval(mlp, input);
+            nn::eval(mlp, input, expected);
+
+            state.test_error = nn::abs_error(mlp);
 
             auto p = nn::prediction(mlp);
 
             state.prediction_ok = p >= 0 && expected.data[p] > 0.5f;
+
+            state.data_id = increment_wrap(state.data_id, data_count - 1);
         }
     }
 
