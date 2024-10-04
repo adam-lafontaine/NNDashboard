@@ -522,8 +522,6 @@ namespace display
             plot_min, plot_max,
             plot_size,
             data_stride);
-        
-        ImGui::Text("%u", state.ai_state.mlp.output.length);
 
         ImGui::End();
     }

@@ -96,11 +96,11 @@ namespace nn
         auto front = layer.io_front;
         auto back = layer.io_back;
 
-        f32 eta = 0.001f;
+        f32 eta = 0.00001f;
 
         for (u32 b = 0; b < back.length; b++)
         {
-            back.delta[b] = num::sign_f32(back.error[b]); // ???
+            back.delta[b] = (back.activation[b] > 0.0f) * back.error[b];
             back.bias[b] += eta * back.delta[b];
         }
 
@@ -125,7 +125,7 @@ namespace nn
         auto front = layer.io_front;
         auto back = layer.io_back;
 
-        f32 eta = 0.01f;
+        f32 eta = 0.00001f;
 
         for (u32 b = 0; b < back.length; b++)
         {
