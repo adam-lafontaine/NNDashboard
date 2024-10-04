@@ -256,6 +256,13 @@ namespace internal
         state.ai_status = MLStatus::None;
     }
 
+
+    static void reset_ai(DisplayState& state)
+    {
+        stop_ai_training(state);
+        nn::destroy(state.ai_state.mlp);
+    }
+
 } // internal
 
 } // display
@@ -402,28 +409,24 @@ namespace display
         auto& topology = state.topology;
         auto& mlp = state.ai_state.mlp;
 
-        auto is_disabled = mlp.memory.ok;
+        auto is_allocated = mlp.memory.ok;
 
 
         ImGui::Begin("Topology");
 
         constexpr int layer_size_min = 1;
-        constexpr int layer_size_max = 32;
+        constexpr int layer_size_max = 64;
         constexpr int layer_size_default = 16;
-
         
         static int n_inner_layers = layer_size_min;
         static int inner_layers[N] = { 0 };
+
+        if (is_allocated) { ImGui::BeginDisabled(); }
 
         ImGui::SliderInt("Inner layers", &n_inner_layers, 1, (int)N);
 
         ImGui::Text("%u", topology.get_input_size());
         ImGui::SameLine();
-
-        if (is_disabled)
-        {
-            ImGui::BeginDisabled();
-        }
 
         for (int i = 0; i < n_inner_layers; i++)
         {
@@ -432,10 +435,7 @@ namespace display
             ImGui::SameLine();
         }
 
-        if (is_disabled)
-        {
-            ImGui::EndDisabled();
-        }
+        if (is_allocated) { ImGui::EndDisabled(); }
 
         ImGui::Text("%u", topology.get_output_size());
 
@@ -450,21 +450,26 @@ namespace display
 
         if (state.ai_data_status == DataStatus::Loaded)
         {
-            if (is_disabled)
-            {
-                ImGui::BeginDisabled();
-            }
+            if (is_allocated) { ImGui::BeginDisabled(); }
 
             if (ImGui::Button("Create"))
             {
                 nn::create(mlp, topology);
             }
 
-            if (is_disabled)
+            if (is_allocated)
             {
                 ImGui::EndDisabled();
                 ImGui::SameLine();
                 ImGui::Text("OK");
+            }
+        }
+
+        if (is_allocated)
+        {
+            if (ImGui::Button("Reset"))
+            {
+                internal::reset_ai(state);
             }
         }
 
@@ -523,7 +528,9 @@ namespace display
         prediction_history[data_offset] = ai.prediction_ok;
         total_pred_ok += prediction_history[data_offset];
 
-        prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;        
+        prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;
+
+        ++data_offset;
 
         ImGui::PlotLines("##ErrorPlot", 
             error_plot_data, 
@@ -543,7 +550,7 @@ namespace display
             plot_size,
             data_stride);
         
-        ++data_offset;
+        
 
         ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
         ImGui::Text("Epochs completed: %u", ai.epoch_id);

@@ -64,6 +64,7 @@ namespace memory_buffer
 		buffer.data_ = nullptr;
 		buffer.capacity_ = 0;
 		buffer.size_ = 0;
+		buffer.ok = 0;
 	}
 	
 

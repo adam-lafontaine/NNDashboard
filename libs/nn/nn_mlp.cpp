@@ -86,6 +86,7 @@ namespace nn
 
             auto sum = span::dot(w, a_in) + output.bias[o];
 
+            // reLU
             output.activation[o] = sum > 0.0f ? sum : 0.0f;
         }
     }
