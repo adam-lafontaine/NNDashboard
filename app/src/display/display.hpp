@@ -527,6 +527,79 @@ namespace display
 
         ImGui::End();
     }
+
+
+    static void activation_window(DisplayState& state)
+    {
+        auto& ai = state.ai_state;
+        auto& net = ai.mlp;
+        auto& layers = net.layers.data;        
+
+        int table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuterV;
+        auto table_dims = ImVec2(0.0f, 0.0f);
+
+        ImGui::Begin("Activations");
+
+        if (!net.memory.ok)
+        {
+            ImGui::End();
+            return;
+        }
+
+        int n_columns = net.layers.length;
+        int n_rows = 1;
+
+        if (ImGui::BeginTable("ActivationTable", n_columns, table_flags, table_dims))
+        {
+            for (int c = 0; c < n_columns; c++)
+            {
+                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+
+                auto len = (int)layers[c].io_back.length;
+                if (len > n_rows)
+                {
+                    n_rows = len;
+                }
+            }
+
+            for (int i = 0; i < n_rows; i++)
+            {
+                ImGui::TableNextRow();
+                for (int c = 0; c < n_columns; c++)
+                {
+                    ImGui::TableSetColumnIndex(c);
+
+                    auto& io = layers[c].io_back;
+
+                    if (i < io.length)
+                    {
+                        ImGui::Text("%6.4f", io.activation[i]);
+                    }
+                    else
+                    {
+                        ImGui::Text("");
+                    }
+                }
+            }
+
+            ImGui::EndTable();
+        }
+
+        static u32 data_id = 0;
+
+        if (ImGui::Button("Next"))
+        {
+            data_id++;
+            if (data_id > ai.train_data.image_count)
+            {
+                data_id = 0;
+            }
+
+            mlai::eval_at(ai, data_id);
+        }
+
+        ImGui::End();
+    }
 }
 
 
@@ -538,5 +611,7 @@ namespace display
         inspect_data_window(state);
         topology_window(state);
         train_window(state);
+
+        activation_window(state);
     }
 }

@@ -15,6 +15,7 @@ namespace nn
         f32* activation = 0;
         f32* bias = 0;
         f32* error = 0;
+        f32* delta = 0;
 
         u32 length;
     };
@@ -72,18 +73,6 @@ namespace nn
         u32 get_inner_layers() { return n_inner_layers; }
         
         void set_inner_layers(u32 inner_layers) { n_inner_layers = inner_layers; }
-
-        /*SpanView<u32> to_span() 
-        { 
-            auto span = span::to_span(span_data, n_inner_layers + 2);
-            span.data[0] = input_size;
-            span.data[span.length - 1] = output_size;
-            for (u32 i = 1; i < span.length - 1; i++)
-            {
-                span.data[i] = inner_layer_data[i - 1];
-            }
-            return span;
-        }*/
     };
 
 

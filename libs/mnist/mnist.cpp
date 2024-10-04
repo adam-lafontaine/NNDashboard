@@ -158,13 +158,13 @@ namespace mnist
 
     SpanView<f32> data_at(ImageData const& data, u32 index)
     {
-        auto span = span::make_view(data.input_buffer);
-
         auto len = data.image_width * data.image_height;
 
         auto begin = data.pixel_buffer.data_ + index * len;
 
         constexpr f32 F = 1.0f / 255.0f;
+
+        auto span = span::make_view(data.input_buffer);
 
         for (u32 i = 0; i < len; i++)
         {
