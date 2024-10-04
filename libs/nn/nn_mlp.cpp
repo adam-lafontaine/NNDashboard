@@ -169,12 +169,12 @@ namespace nn
 
         // inner layers
         auto N = topology.get_inner_layers();
-        for (u32 i = 0; i < N; i++)
+        for (u32 i = 1; i < N; i++)
         {
+            t_id.value++;
+
             len_front = len_back;
             len_back = topology.get_inner_size_at(t_id);
-
-            t_id.value++;
 
             n_weights += len_front * len_back;
             n_bias += len_back;
@@ -264,8 +264,10 @@ namespace nn
 
         // inner layers        
         u32 layer_id = 1;
-        for (u32 i = 0; i < N; i++)
+        for (u32 i = 1; i < N; i++)
         { 
+            t_id.value++;
+
             auto& layer = layers[layer_id];
             layer.io_front = layers[layer_id - 1].io_back;
 
@@ -286,12 +288,9 @@ namespace nn
             span::fill(span::to_span(back.error, len_back), 0.0f);
 
             ++layer_id;
-            t_id.value++;
         }
 
-        assert(layer_id == net.layers.length);
-
-        --layer_id;
+        layer_id = net.layers.length - 1;
 
         // output layer
         {

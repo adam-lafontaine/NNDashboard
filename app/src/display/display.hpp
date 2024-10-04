@@ -517,8 +517,6 @@ namespace display
 
         static u8 data_offset = 0;
 
-        //cstr overlay = "";
-
         error_plot_data[data_offset] = ai.train_error;
 
         total_pred_ok -= prediction_history[data_offset];
