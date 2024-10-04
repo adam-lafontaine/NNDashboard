@@ -351,4 +351,32 @@ namespace nn
 
         update_input(net.layers.data[0]);
     }
+
+
+    int prediction(Net const& net)
+    {
+        int p = -1;
+
+        for (u32 i = 0; i < net.output.length; i++)
+        {
+            if (net.output.data[i] > 0.5f)
+            {
+                p = (int)i;
+            }
+        }
+
+        return p;
+    }
+
+
+    f32 abs_error(Net const& net)
+    {
+        f32 e = 0.0f;
+        for (u32 i = 0; i < net.error.length; i++)
+        {
+            e += num::abs(net.error.data[i]);
+        }
+
+        return e / net.error.length;
+    }
 }

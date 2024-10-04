@@ -474,7 +474,8 @@ namespace display
 
     static void train_window(DisplayState& state)
     {
-        auto& mlp = state.ai_state.mlp;
+        auto& ai = state.ai_state;
+        auto& mlp = ai.mlp;
 
         auto start_disabled = !mlp.memory.ok || state.ai_status == MLStatus::Training;
         auto stop_disabled = state.ai_status != MLStatus::Training;
@@ -507,21 +508,47 @@ namespace display
         constexpr auto plot_size = ImVec2(0, 80.0f);
         constexpr auto data_stride = sizeof(f32);
 
-        static f32 plot_data[data_count] = { 0 };
+        static f32 error_plot_data[data_count] = { 0 };
+
+        static u8 prediction_history[data_count] = { 0 };
+        static u32 total_pred_ok = 0;
+
+        static f32 prediction_plot_data[data_count] = { 0 };
+
         static u8 data_offset = 0;
 
-        cstr overlay = "";
+        //cstr overlay = "";
 
-        plot_data[data_offset++] = state.ai_state.train_error;
+        error_plot_data[data_offset] = ai.train_error;
+
+        total_pred_ok -= prediction_history[data_offset];
+        prediction_history[data_offset] = ai.prediction_ok;
+        total_pred_ok += prediction_history[data_offset];
+
+        prediction_plot_data[data_offset] = (f32)total_pred_ok / data_count;        
 
         ImGui::PlotLines("##ErrorPlot", 
-            plot_data, 
+            error_plot_data, 
             data_count, 
             (int)data_offset,
-            overlay,
+            "Error",
             plot_min, plot_max,
             plot_size,
             data_stride);
+        
+        ImGui::PlotLines("##PredictionPlot", 
+            prediction_plot_data, 
+            data_count, 
+            (int)data_offset,
+            "Predictions",
+            plot_min, plot_max,
+            plot_size,
+            data_stride);
+        
+        ++data_offset;
+
+        ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
+        ImGui::Text("Epochs completed: %u", ai.epoch_id);
 
         ImGui::End();
     }

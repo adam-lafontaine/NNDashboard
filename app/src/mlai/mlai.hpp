@@ -25,6 +25,10 @@ namespace mlai
 
         f32 train_error = 1.0f;
         f32 test_error = 1.0f;
+
+        u32 data_id = 0;
+        u32 epoch_id = 0;
+        b8 prediction_ok = 0;
     };
 
 

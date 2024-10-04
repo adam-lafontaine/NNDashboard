@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mlai.hpp"
-#include "../../../libs/util/numeric.hpp"
 
 
 namespace mlai
@@ -47,27 +46,28 @@ namespace mlai
     {
         auto& data = state.train_data;
         auto& labels = state.train_labels;
+
         u32 data_count = data.image_count;
-        u32 data_id = 0;
+        state.data_id = 0;
+        state.epoch_id = 0;
 
         auto& mlp = state.mlp;
 
         while (train_condition())
         {
-            auto input = mnist::data_at(data, data_id);
-            auto expected = mnist::data_at(labels, data_id);
+            auto input = mnist::data_at(data, state.data_id);
+            auto expected = mnist::data_at(labels, state.data_id);
             
             nn::update(mlp, input, expected);
 
-            f32 e = 0.0f;
-            for (u32 i = 0; i < mlp.error.length; i++)
-            {
-                e += num::abs(mlp.error.data[i]);
-            }
+            state.train_error = nn::abs_error(mlp);
 
-            state.train_error = e / mlp.error.length;
+            auto p = nn::prediction(mlp);
 
-            data_id = increment_wrap(data_id, data_count - 1);
+            state.prediction_ok = p >= 0 && expected.data[p] > 0.5f;
+
+            state.data_id = increment_wrap(state.data_id, data_count - 1);
+            state.epoch_id += state.data_id == 0;
         }
     }
 
