@@ -30,72 +30,76 @@ namespace ini_str
     "Size=400,400\n"
     "Collapsed=0\n"
 
+#ifdef SHOW_IMGUI_DEMO
     "[Window][Dear ImGui Demo]\n"
-    "Pos=0,530\n"
-    "Size=485,247\n"
+    "Pos=0,131\n"
+    "Size=432,388\n"
     "Collapsed=0\n"
-    "DockId=0x00000002,1\n"
+    "DockId=0x00000007,2\n"
 
     "[Window][Hello, world!]\n"
-    "Pos=0,530\n"
-    "Size=485,247\n"
+    "Pos=0,131\n"
+    "Size=432,388\n"
     "Collapsed=0\n"
-    "DockId=0x00000002,2\n"
+    "DockId=0x00000007,3\n"
+#endif
 
     "[Window][Status]\n"
     "Pos=0,0\n"
-    "Size=485,152\n"
-    "Collapsed=0\n"
-    "DockId=0x00000003,0\n"
-
-    "[Window][Topology]\n"
-    "Pos=487,0\n"
-    "Size=895,281\n"
-    "Collapsed=0\n"
-    "DockId=0x00000009,0\n"
-
-    "[Window][Train]\n"
-    "Pos=487,283\n"
-    "Size=895,241\n"
-    "Collapsed=0\n"
-    "DockId=0x00000008,0\n"
-
-    "[Window][Test]\n"
-    "Pos=487,283\n"
-    "Size=895,241\n"
-    "Collapsed=0\n"
-    "DockId=0x00000008,1\n"
-
-    "[Window][Activations]\n"
-    "Pos=487,526\n"
-    "Size=895,251\n"
-    "Collapsed=0\n"
-    "DockId=0x0000000A,0\n"
-
-    "[Window][Diagnostics]\n"
-    "Pos=0,530\n"
-    "Size=485,247\n"
-    "Collapsed=0\n"
-    "DockId=0x00000002,0\n"
-
-    "[Window][Inspect]\n"
-    "Pos=0,154\n"
-    "Size=485,374\n"
+    "Size=432,129\n"
     "Collapsed=0\n"
     "DockId=0x00000006,0\n"
 
+    "[Window][Inspect]\n"
+    "Pos=0,131\n"
+    "Size=432,388\n"
+    "Collapsed=0\n"
+    "DockId=0x00000007,0\n"
+
+    "[Window][Topology]\n"
+    "Pos=434,0\n"
+    "Size=948,244\n"
+    "Collapsed=0\n"
+    "DockId=0x00000003,0\n"
+
+    "[Window][Train]\n"
+    "Pos=434,246\n"
+    "Size=948,273\n"
+    "Collapsed=0\n"
+    "DockId=0x0000000A,0\n"
+
+    "[Window][Test]\n"
+    "Pos=434,246\n"
+    "Size=948,273\n"
+    "Collapsed=0\n"
+    "DockId=0x0000000A,1\n"
+
+    "[Window][Activations]\n"
+    "Pos=0,521\n"
+    "Size=1382,256\n"
+    "Collapsed=0\n"
+    "DockId=0x00000002,0\n"
+
+#ifdef ALLOC_COUNT
+    "[Window][Diagnostics]\n"
+    "Pos=0,131\n"
+    "Size=432,388\n"
+    "Collapsed=0\n"
+    "DockId=0x00000007,1\n"
+#endif
+
     "[Docking][Data]\n"
-    "DockSpace       ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,0 Size=1382,777 Split=X\n"
-    "  DockNode      ID=0x00000001 Parent=0x8B93E3BD SizeRef=485,777 Split=Y Selected=0xAB789A92\n"
-    "    DockNode    ID=0x00000003 Parent=0x00000001 SizeRef=455,152 Selected=0x559F4DD0\n"
-    "    DockNode    ID=0x00000004 Parent=0x00000001 SizeRef=455,623 Split=Y Selected=0x9FEC4C38\n"
-    "      DockNode  ID=0x00000006 Parent=0x00000004 SizeRef=485,374 Selected=0x9FEC4C38\n"
-    "      DockNode  ID=0x00000002 Parent=0x00000004 SizeRef=485,247 Selected=0x7FB45FEC\n"
-    "  DockNode      ID=0x00000005 Parent=0x8B93E3BD SizeRef=895,777 Split=Y\n"
-    "    DockNode    ID=0x00000007 Parent=0x00000005 SizeRef=895,524 Split=Y Selected=0x411CE2EF\n"
-    "      DockNode  ID=0x00000009 Parent=0x00000007 SizeRef=541,281 Selected=0x411CE2EF\n"
-    "      DockNode  ID=0x00000008 Parent=0x00000007 SizeRef=541,241 Selected=0x44A6A033\n"
-    "    DockNode    ID=0x0000000A Parent=0x00000005 SizeRef=895,251 CentralNode=1 Selected=0x887087C1\n";
+    "DockSpace       ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,0 Size=1382,777 Split=Y\n"
+    "  DockNode      ID=0x00000001 Parent=0x8B93E3BD SizeRef=1382,519 Split=X\n"
+    "    DockNode    ID=0x00000004 Parent=0x00000001 SizeRef=432,598 Split=Y Selected=0x559F4DD0\n"
+    "      DockNode  ID=0x00000006 Parent=0x00000004 SizeRef=338,129 Selected=0x559F4DD0\n"
+    "      DockNode  ID=0x00000007 Parent=0x00000004 SizeRef=338,388 Selected=0x9FEC4C38\n"
+    "    DockNode    ID=0x00000005 Parent=0x00000001 SizeRef=948,598 Split=Y\n"
+    "      DockNode  ID=0x00000003 Parent=0x00000005 SizeRef=948,244 Selected=0x411CE2EF\n"
+    "      DockNode  ID=0x0000000A Parent=0x00000005 SizeRef=948,273 CentralNode=1 Selected=0xAB789A92\n"
+    "  DockNode      ID=0x00000002 Parent=0x8B93E3BD SizeRef=1382,256 Selected=0x887087C1\n"
+    "\n";
+
 }
 
 #endif

@@ -470,6 +470,8 @@ namespace display
 
         if (state.ai_data_status == DataStatus::Loaded)
         {
+            ImGui::SameLine();
+            
             if (is_allocated) { ImGui::BeginDisabled(); }
 
             if (ImGui::Button("Create"))
