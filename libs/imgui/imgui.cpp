@@ -13375,15 +13375,12 @@ void ImGui::LogButtons()
 // - WindowSettingsHandler_***() [Internal]
 //-----------------------------------------------------------------------------
 
-#ifdef USE_INI_STR_H
+#ifdef USE_INI_STR
 
 static void load_custom_ini()
 {
-
-
-#include "./ini_str.h"
     
-    auto file_data = INI_STR;
+    auto file_data = ini_str::INI_STR;
     if (!file_data)
         return;
 
@@ -13391,7 +13388,6 @@ static void load_custom_ini()
 
     if (file_data_size > 0)
         ImGui::LoadIniSettingsFromMemory(file_data, (size_t)file_data_size);
-
 
 }
 
@@ -13407,7 +13403,7 @@ void ImGui::UpdateSettings()
     {
         IM_ASSERT(g.SettingsWindows.empty());
 
-#ifdef USE_INI_STR_H
+#ifdef USE_INI_STR
 
         load_custom_ini();
 
@@ -13571,7 +13567,7 @@ void ImGui::LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size)
 
 void ImGui::SaveIniSettingsToDisk(const char* ini_filename)
 {
-#ifndef USE_INI_STR_H
+#ifndef USE_INI_STR
 
     ImGuiContext& g = *GImGui;
     g.SettingsDirtyTimer = 0.0f;
