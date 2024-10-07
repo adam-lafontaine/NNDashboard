@@ -211,7 +211,7 @@ static bool ui_init()
     int window_w = 1382;
     int window_h = 777;
 
-    window = ui::create_sdl_ogl_window("Machine Learning", window_w, window_h);
+    window = ui::create_sdl_dx11_window("Machine Learning", window_w, window_h);
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");

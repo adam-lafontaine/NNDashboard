@@ -183,7 +183,7 @@ namespace mnist
         
         for (u8 i = 0; i < 10; i++)
         {
-            span.data[i] = label == i ? 1.0f : 0.0f;
+            span.data[i] = label == 8 ? 1.0f : 0.0f;
         }
 
         return span;
