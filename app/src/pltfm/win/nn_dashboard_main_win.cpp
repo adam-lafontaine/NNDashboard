@@ -47,8 +47,16 @@ namespace
 
     display::DisplayState display_state;
 
-    //#define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
+#ifdef NDEBUG
+
+    // Data in current directory
     #define ROOT "./"
+
+#else
+    // your test_data path here
+    #define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
+
+#endif
 
     constexpr mlai::DataFiles ai_files = {
         ROOT "train-images.idx3-ubyte",
