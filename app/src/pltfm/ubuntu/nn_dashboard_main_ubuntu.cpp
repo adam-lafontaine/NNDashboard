@@ -47,6 +47,8 @@ namespace
 
     display::DisplayState display_state;
 
+    // your data path here
+    // zip file available in the downloads folder
     #define ROOT "/home/adam/Repos/NNDashboard/resources/test_data/"
 
     constexpr mlai::DataFiles ai_files = {
@@ -147,9 +149,7 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
-    display::status_window(display_state);
-    display::inspect_data_window(display_state);
-
+    display::show_display(display_state);
     diagnostics::show_diagnostics();
     
     ImGui::Render();
@@ -171,11 +171,10 @@ static bool ui_init()
     SDL_SetHint(SDL_HINT_IME_SHOW_UI, "1");
 #endif
 
-    // fullscreen window
-    SDL_DisplayMode dm;
-    SDL_GetCurrentDisplayMode(0, &dm);
+    int window_w = 1382;
+    int window_h = 777;
 
-    window = ui::create_sdl_ogl_window("Camera", dm.w, dm.h);    
+    window = ui::create_sdl_ogl_window("Machine Learning", window_w, window_h);
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");
