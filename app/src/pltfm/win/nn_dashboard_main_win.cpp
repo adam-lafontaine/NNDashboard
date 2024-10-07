@@ -47,7 +47,17 @@ namespace
 
     display::DisplayState display_state;
 
+#ifdef NDEBUG
+
+    // Data assumed to be in current directory
+    #define ROOT "./"
+
+#else
+    // your data path here
+    // zip file available in the downloads folder
     #define ROOT "C:\\D_Data\\Repos\\NNDashboard/resources/test_data/"
+
+#endif
 
     constexpr mlai::DataFiles ai_files = {
         ROOT "train-images.idx3-ubyte",
@@ -171,9 +181,7 @@ static void render_imgui_frame()
     ui::show_imgui_demo(ui_state);
 #endif
 
-    display::status_window(display_state);
-    display::inspect_data_window(display_state);
-
+    display::show_display(display_state);
     diagnostics::show_diagnostics();
 
     ImGui::Render();
@@ -200,14 +208,10 @@ static bool ui_init()
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
 
-    auto df = 0.9f;
-    auto dw = (int)(df * dm.w);
-    auto dh = (int)(df * dm.h);
+    int window_w = 1382;
+    int window_h = 777;
 
-    //auto dw = dm.w;
-    //auto dh = dm.h;
-
-    window = ui::create_sdl_dx11_window("Machine Learning", dw, dh);
+    window = ui::create_sdl_ogl_window("Machine Learning", window_w, window_h);
     if (!window)
     {
         sdl::print_error("Error: create_sdl_ogl_window()");

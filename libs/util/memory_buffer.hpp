@@ -22,7 +22,7 @@ namespace memory_buffer
 	template <typename T>
 	inline bool create_buffer(MemoryBuffer<T>& buffer, u32 n_elements, cstr tag)
 	{
-		assert(n_elements);
+		assert(n_elements > 0);
 		assert(!buffer.data_);
 
 		if (n_elements == 0 || buffer.data_)
@@ -64,6 +64,7 @@ namespace memory_buffer
 		buffer.data_ = nullptr;
 		buffer.capacity_ = 0;
 		buffer.size_ = 0;
+		buffer.ok = 0;
 	}
 	
 
@@ -87,7 +88,7 @@ namespace memory_buffer
 	template <typename T>
 	inline T* push_elements(MemoryBuffer<T>& buffer, u32 n_elements)
 	{
-		assert(n_elements);
+		assert(n_elements > 0);
 
 		if (n_elements == 0)
 		{
@@ -103,7 +104,7 @@ namespace memory_buffer
 			buffer.size_ < buffer.capacity_;
 
 		auto elements_available = (buffer.capacity_ - buffer.size_) >= n_elements;
-		assert(elements_available);
+		assert(elements_available > 0);
 
 		if (!is_valid || !elements_available)
 		{

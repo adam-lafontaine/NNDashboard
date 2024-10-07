@@ -1,0 +1,1 @@
+Unzip MNIST_ORG.zip to provide training and testing data
