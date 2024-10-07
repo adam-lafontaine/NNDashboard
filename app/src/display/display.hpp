@@ -157,6 +157,7 @@ namespace internal
         auto& ai = state.ai_state;
         if (!mlai::load_data(ai, state.ai_files))
         {
+            sdl::display_error("Train/test data unavailable");
             return false;
         }
 
@@ -471,7 +472,7 @@ namespace display
         if (state.ai_data_status == DataStatus::Loaded)
         {
             ImGui::SameLine();
-            
+
             if (is_allocated) { ImGui::BeginDisabled(); }
 
             if (ImGui::Button("Create"))

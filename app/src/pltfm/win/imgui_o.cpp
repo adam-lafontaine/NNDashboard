@@ -12,9 +12,9 @@
 
 #ifdef USE_INI_STR
 
-// same custom ini to disk
+// save custom ini to disk
 // makes for easier modifcation during development
-#define SAVE_INI_STR
+//#define SAVE_INI_STR
 
 namespace ini_str
 {
