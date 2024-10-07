@@ -485,6 +485,8 @@ namespace display
             }
         }
 
+        ImGui::SameLine();
+
         if (is_allocated)
         {
             if (ImGui::Button("Reset"))
@@ -506,6 +508,8 @@ namespace display
         auto stop_disabled = state.ai_status != MLStatus::Training;
 
         ImGui::Begin("Train");
+
+        ImGui::Text("Train network");
 
         if (start_disabled) { ImGui::BeginDisabled(); }
 
@@ -576,6 +580,7 @@ namespace display
         if (state.ai_status == MLStatus::Training)
         {
             ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
+            ImGui::SameLine();
             ImGui::Text("Epochs completed: %u", ai.epoch_id);
         }
 
@@ -592,6 +597,8 @@ namespace display
         auto stop_disabled = state.ai_status != MLStatus::Testing;
 
         ImGui::Begin("Test");
+
+        ImGui::Text("Test network");
 
         if (start_disabled) { ImGui::BeginDisabled(); }
 
@@ -685,14 +692,31 @@ namespace display
             return;
         }
 
-        int n_columns = net.layers.length;
+        int n_columns = net.layers.length + 1;
+        int label_column = n_columns - 1;
+        int output_column = n_columns - 2;
         int n_rows = 1;
+
+        ImGui::Text("Layers");
 
         if (ImGui::BeginTable("ActivationTable", n_columns, table_flags, table_dims))
         {
+            char label[2] = { '0', 0 };
             for (int c = 0; c < n_columns; c++)
             {
-                ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+                if (c == output_column)
+                {
+                    ImGui::TableSetupColumn("Output", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+                }                
+                else if (c == label_column)
+                {
+                    ImGui::TableSetupColumn("Labels", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+                }
+                else
+                {
+                    label[0] = '0' + 1 + c;
+                    ImGui::TableSetupColumn(label, ImGuiTableColumnFlags_WidthFixed, 50.0f);
+                }                
 
                 auto len = (int)layers[c].io_back.length;
                 if (len > n_rows)
@@ -701,10 +725,12 @@ namespace display
                 }
             }
 
+            ImGui::TableHeadersRow();
+
             for (int i = 0; i < n_rows; i++)
             {
                 ImGui::TableNextRow();
-                for (int c = 0; c < n_columns; c++)
+                for (int c = 0; c <= output_column; c++)
                 {
                     ImGui::TableSetColumnIndex(c);
 
@@ -714,11 +740,15 @@ namespace display
                     {
                         ImGui::Text("%6.4f", io.activation[i]);
                     }
-                    else
-                    {
-                        ImGui::Text("");
-                    }
                 }
+
+                // Hack! The row id is the output label
+                ImGui::TableSetColumnIndex(label_column);
+                if (i < 10)
+                {
+                    ImGui::Text("%d", i);
+                }
+                
             }
 
             ImGui::EndTable();
