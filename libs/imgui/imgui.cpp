@@ -13567,7 +13567,11 @@ void ImGui::LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size)
 
 void ImGui::SaveIniSettingsToDisk(const char* ini_filename)
 {
-#ifndef USE_INI_STR
+#if defined (USE_INI_STR) && ! defined (SAVE_INI_STR) 
+
+    return;
+
+#else
 
     ImGuiContext& g = *GImGui;
     g.SettingsDirtyTimer = 0.0f;

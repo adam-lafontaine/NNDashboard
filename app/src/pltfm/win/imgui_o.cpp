@@ -8,6 +8,10 @@
 // imgui/imgui.cpp modifications at line 13378, 13406, 13570
 #define USE_INI_STR
 
+// same custom ini to disk
+// makes for easier modifcation during development
+#define SAVE_INI_STR
+
 #ifdef USE_INI_STR
 
 namespace ini_str
