@@ -723,6 +723,8 @@ namespace display
         int table_flags = ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_BordersOuterV;
         auto table_dims = ImVec2(0.0f, 0.0f);
 
+        auto train_all = ai.train_label == mlai::TRAIN_ALL_LABELS;
+
         ImGui::Begin("Activations");
 
         if (!net.memory.ok)
@@ -734,6 +736,7 @@ namespace display
         int n_columns = net.layers.length + 1;
         int label_column = n_columns - 1;
         int output_column = n_columns - 2;
+        
         int n_rows = 1;
 
         ImGui::Text("Layers");
@@ -781,13 +784,26 @@ namespace display
                     }
                 }
 
-                // Hack! The row id is the output label
                 ImGui::TableSetColumnIndex(label_column);
-                if (i < 10)
+                if (train_all && i < 10)
                 {
+                    // Hack! The row id is the output label                    
                     ImGui::Text("%d", i);
                 }
-                
+                else if (i < 2)
+                {
+                    switch (i)
+                    {
+                    case 0:
+                        ImGui::Text("%d", ai.train_label);
+                        break;
+                    case 1:
+                        ImGui::Text("other");
+                        break;
+                    default:
+                        break;
+                    }
+                }
             }
 
             ImGui::EndTable();
