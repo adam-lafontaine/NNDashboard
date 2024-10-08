@@ -10,16 +10,20 @@ namespace mlai
 {
     using bool_f = std::function<bool()>;
 
+    constexpr int TRAIN_ALL_LABELS = -1;
+
 
     class AI_State
     {
     public:
 
-        mnist::ImageData train_data;
-        mnist::LabelData train_labels;
+        int train_label = TRAIN_ALL_LABELS;
 
-        mnist::ImageData test_data;
-        mnist::LabelData test_labels;
+        mnist::ImageData train_image_data;
+        mnist::LabelData train_label_data;
+
+        mnist::ImageData test_image_data;
+        mnist::LabelData test_label_data;
 
         nn::Net mlp;
 
