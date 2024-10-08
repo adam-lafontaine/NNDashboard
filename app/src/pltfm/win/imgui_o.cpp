@@ -39,7 +39,7 @@ namespace ini_str
 
     "[Window][Hello, world!]\n"
     "Pos=0,131\n"
-    "Size=432,388\n"
+    "Size=432,443\n"
     "Collapsed=0\n"
     "DockId=0x00000007,3\n"
 #endif
@@ -52,52 +52,52 @@ namespace ini_str
 
     "[Window][Inspect]\n"
     "Pos=0,131\n"
-    "Size=432,388\n"
+    "Size=432,443\n"
     "Collapsed=0\n"
     "DockId=0x00000007,0\n"
 
     "[Window][Topology]\n"
     "Pos=434,0\n"
-    "Size=948,244\n"
+    "Size=948,288\n"
     "Collapsed=0\n"
     "DockId=0x00000003,0\n"
 
     "[Window][Train]\n"
-    "Pos=434,246\n"
-    "Size=948,273\n"
+    "Pos=434,290\n"
+    "Size=948,284\n"
     "Collapsed=0\n"
     "DockId=0x0000000A,0\n"
 
     "[Window][Test]\n"
-    "Pos=434,246\n"
-    "Size=948,273\n"
+    "Pos=434,290\n"
+    "Size=948,284\n"
     "Collapsed=0\n"
     "DockId=0x0000000A,1\n"
 
     "[Window][Activations]\n"
-    "Pos=0,521\n"
-    "Size=1382,256\n"
+    "Pos=0,576\n"
+    "Size=1382,201\n"
     "Collapsed=0\n"
     "DockId=0x00000002,0\n"
 
 #ifdef ALLOC_COUNT
     "[Window][Diagnostics]\n"
     "Pos=0,131\n"
-    "Size=432,388\n"
+    "Size=432,443\n"
     "Collapsed=0\n"
     "DockId=0x00000007,1\n"
 #endif
 
     "[Docking][Data]\n"
     "DockSpace       ID=0x8B93E3BD Window=0xA787BDB4 Pos=0,0 Size=1382,777 Split=Y\n"
-    "  DockNode      ID=0x00000001 Parent=0x8B93E3BD SizeRef=1382,519 Split=X\n"
+    "  DockNode      ID=0x00000001 Parent=0x8B93E3BD SizeRef=1382,574 Split=X\n"
     "    DockNode    ID=0x00000004 Parent=0x00000001 SizeRef=432,598 Split=Y Selected=0x559F4DD0\n"
     "      DockNode  ID=0x00000006 Parent=0x00000004 SizeRef=338,129 Selected=0x559F4DD0\n"
-    "      DockNode  ID=0x00000007 Parent=0x00000004 SizeRef=338,388 Selected=0x9FEC4C38\n"
+    "      DockNode  ID=0x00000007 Parent=0x00000004 SizeRef=338,443 Selected=0x9FEC4C38\n"
     "    DockNode    ID=0x00000005 Parent=0x00000001 SizeRef=948,598 Split=Y\n"
-    "      DockNode  ID=0x00000003 Parent=0x00000005 SizeRef=948,244 Selected=0x411CE2EF\n"
-    "      DockNode  ID=0x0000000A Parent=0x00000005 SizeRef=948,273 CentralNode=1 Selected=0xAB789A92\n"
-    "  DockNode      ID=0x00000002 Parent=0x8B93E3BD SizeRef=1382,256 Selected=0x887087C1\n"
+    "      DockNode  ID=0x00000003 Parent=0x00000005 SizeRef=948,288 Selected=0x411CE2EF\n"
+    "      DockNode  ID=0x0000000A Parent=0x00000005 SizeRef=948,284 CentralNode=1 Selected=0xAB789A92\n"
+    "  DockNode      ID=0x00000002 Parent=0x8B93E3BD SizeRef=1382,201 Selected=0x887087C1\n"
     "\n";
 
 }
