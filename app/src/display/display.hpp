@@ -456,6 +456,9 @@ namespace display
 
         if (is_disabled) { ImGui::BeginDisabled(); }
 
+        ImGui::Text("Train label(s)");
+        ImGui::SameLine();
+
         static int train_option = mlai::TRAIN_ALL_LABELS;
         ImGui::RadioButton("All", &train_option, mlai::TRAIN_ALL_LABELS);
         char train_option_rb_label[2] { '0', 0 };
