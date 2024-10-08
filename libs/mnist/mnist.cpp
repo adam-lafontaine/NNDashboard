@@ -156,7 +156,7 @@ namespace mnist
     }
 
 
-    SpanView<f32> data_at(ImageData const& data, u32 index)
+    SpanView<f32> input_data_at(ImageData const& data, u32 index)
     {
         auto len = data.image_width * data.image_height;
 
@@ -175,16 +175,29 @@ namespace mnist
     }
 
 
-    SpanView<f32> data_at(LabelData const& data, u32 index)
+    SpanView<f32> label_data_at(LabelData const& data, u32 index)
     {
         auto span = span::make_view(data.output_buffer);
 
         auto label = data.label_buffer.data_[index];
         
-        for (u8 i = 0; i < 10; i++)
+        for (u8 i = 0; i < span.length; i++)
         {
             span.data[i] = label == i ? 1.0f : 0.0f;
         }
+
+        return span;
+    }
+
+
+    SpanView<f32> label_equals_at(LabelData const& data, u8 label, u32 index)
+    {
+        auto span = span::to_span(data.output_buffer.data_, 2);
+
+        auto equal = label == data.label_buffer.data_[index];
+
+        span.data[0] = (f32)equal;
+        span.data[1] = (f32)(!equal);
 
         return span;
     }

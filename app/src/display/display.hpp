@@ -121,8 +121,8 @@ namespace internal
 
     static bool create_input_display(DisplayState& state)
     {
-        auto wd = state.ai_state.test_data.image_width; // 17
-        auto hd = state.ai_state.test_data.image_height; // 11
+        auto wd = state.ai_state.test_image_data.image_width;
+        auto hd = state.ai_state.test_image_data.image_height;
 
         auto wi = state.input_image.width;
         auto hi = state.input_image.height;
@@ -161,8 +161,8 @@ namespace internal
             return false;
         }
 
-        state.topology.set_input_size(mnist::data_at(ai.test_data, 0).length);
-        state.topology.set_output_size(mnist::data_at(ai.test_labels, 0).length);
+        state.topology.set_input_size(mnist::input_data_at(ai.test_image_data, 0).length);
+        //state.topology.set_output_size(mnist::label_data_at(ai.test_labels, 0).length);
 
         return true;
     }
@@ -284,6 +284,15 @@ namespace internal
         nn::destroy(state.ai_state.mlp);
     }
 
+
+    static void create_ai(DisplayState& state)
+    {
+        auto& topology = state.topology;
+        auto& mlp = state.ai_state.mlp;
+
+        nn::create(mlp, topology);
+    }
+
 } // internal
 
 } // display
@@ -338,25 +347,25 @@ namespace display
         ImGui::Text("%s", msg);
 
         ImGui::BeginGroup();
-        internal::image_data_properties(state.ai_state.train_data, "Training data");
+        internal::image_data_properties(state.ai_state.train_image_data, "Training data");
         ImGui::EndGroup();
 
         ImGui::SameLine();
 
         ImGui::BeginGroup();
-        internal::image_data_properties(state.ai_state.test_data, "Testing data");
+        internal::image_data_properties(state.ai_state.test_image_data, "Testing data");
         ImGui::EndGroup();
 
         ImGui::SameLine();
 
         ImGui::BeginGroup();
-        internal::label_data_properties(state.ai_state.train_labels, "Training labels");
+        internal::label_data_properties(state.ai_state.train_label_data, "Training labels");
         ImGui::EndGroup();
 
         ImGui::SameLine();
 
         ImGui::BeginGroup();
-        internal::label_data_properties(state.ai_state.test_labels, "Testing labels");
+        internal::label_data_properties(state.ai_state.test_label_data, "Testing labels");
         ImGui::EndGroup();
 
         ImGui::End();
@@ -382,8 +391,8 @@ namespace display
         auto& view = state.input_view;
         auto& ai = state.ai_state;
 
-        auto src_data = ai.train_data;
-        auto label_data = ai.train_labels;
+        auto src_data = ai.train_image_data;
+        auto label_data = ai.train_label_data;
 
         static int data_option = 0;
         ImGui::RadioButton("Training data", &data_option, 0); ImGui::SameLine();
@@ -393,8 +402,8 @@ namespace display
 
         if (data_option)
         {
-            src_data = ai.test_data;
-            label_data = ai.test_labels;
+            src_data = ai.test_image_data;
+            label_data = ai.test_label_data;
         }
         
         int data_id_min = 0;
@@ -428,10 +437,13 @@ namespace display
         auto layer_labels = layer_labels_array.labels;
 
         auto& topology = state.topology;
-        auto& mlp = state.ai_state.mlp;
+        auto& ai = state.ai_state;
+        auto& mlp = ai.mlp;
 
-        auto is_allocated = mlp.memory.ok;
+        auto data_loaded = state.ai_data_status == DataStatus::Loaded;
+        auto memory_allocated = mlp.memory.ok;
 
+        auto is_disabled = !data_loaded || memory_allocated;
 
         ImGui::Begin("Topology");
 
@@ -442,9 +454,35 @@ namespace display
         static int n_inner_layers = layer_size_min;
         static int inner_layers[N] = { 0 };
 
-        if (is_allocated) { ImGui::BeginDisabled(); }
+        if (is_disabled) { ImGui::BeginDisabled(); }
 
-        ImGui::SliderInt("Inner layers", &n_inner_layers, 1, (int)N);
+        ImGui::Text("Train label(s)");
+        ImGui::SameLine();
+
+        static int train_option = mlai::TRAIN_ALL_LABELS;
+        ImGui::RadioButton("All", &train_option, mlai::TRAIN_ALL_LABELS);
+        char train_option_rb_label[2] { '0', 0 };
+        for (int i = 0; i < 10; i++)
+        {
+            ImGui::SameLine();
+            ImGui::RadioButton(train_option_rb_label, &train_option, i);
+            train_option_rb_label[0]++;
+        }
+
+        ai.train_label = train_option;
+        if (train_option == mlai::TRAIN_ALL_LABELS)
+        {
+            //topology.set_output_size(mnist::label_data_at(ai.test_labels, 0).length); // 10
+            topology.set_output_size(10);
+        }
+        else
+        {
+            //topology.set_output_size(mnist::label_equals_at(ai.test_labels, 0, 0).length); // 2
+            topology.set_output_size(2);
+        }
+
+        ImGui::Text("Inner layers");
+        ImGui::SliderInt("##", &n_inner_layers, 1, (int)N);
 
         ImGui::Text("%u", topology.get_input_size());
         ImGui::SameLine();
@@ -456,7 +494,7 @@ namespace display
             ImGui::SameLine();
         }
 
-        if (is_allocated) { ImGui::EndDisabled(); }
+        if (is_disabled) { ImGui::EndDisabled(); }        
 
         ImGui::Text("%u", topology.get_output_size());
 
@@ -471,27 +509,25 @@ namespace display
 
         if (state.ai_data_status == DataStatus::Loaded)
         {
+            if (memory_allocated) { ImGui::BeginDisabled(); }
+
             ImGui::SameLine();
-
-            if (is_allocated) { ImGui::BeginDisabled(); }
-
             if (ImGui::Button("Create"))
             {
-                nn::create(mlp, topology);
+                internal::create_ai(state);
             }
 
-            if (is_allocated)
+            if (memory_allocated)
             {
                 ImGui::EndDisabled();
                 ImGui::SameLine();
                 ImGui::Text("OK");
             }
-        }
+        }        
 
-        ImGui::SameLine();
-
-        if (is_allocated)
+        if (memory_allocated)
         {
+            ImGui::SameLine();
             if (ImGui::Button("Reset"))
             {
                 internal::reset_ai(state);
@@ -512,7 +548,7 @@ namespace display
 
         ImGui::Begin("Train");
 
-        ImGui::Text("Train network");
+        ImGui::Text("TRAIN network");
 
         if (start_disabled) { ImGui::BeginDisabled(); }
 
@@ -582,7 +618,7 @@ namespace display
         
         if (state.ai_status == MLStatus::Training)
         {
-            ImGui::Text("Data %u/%u", ai.data_id, ai.train_data.image_count);
+            ImGui::Text("Data %u/%u", ai.data_id, ai.train_image_data.image_count);
             ImGui::SameLine();
             ImGui::Text("Epochs completed: %u", ai.epoch_id);
         }
@@ -601,7 +637,7 @@ namespace display
 
         ImGui::Begin("Test");
 
-        ImGui::Text("Test network");
+        ImGui::Text("TEST network");
 
         if (start_disabled) { ImGui::BeginDisabled(); }
 
@@ -671,7 +707,7 @@ namespace display
         
         if (state.ai_status == MLStatus::Testing)
         {
-            ImGui::Text("Data %u/%u", ai.data_id, ai.test_data.image_count);
+            ImGui::Text("Data %u/%u", ai.data_id, ai.test_image_data.image_count);
         }        
 
         ImGui::End();
@@ -762,7 +798,7 @@ namespace display
         if (ImGui::Button("Next"))
         {
             data_id++;
-            if (data_id > ai.train_data.image_count)
+            if (data_id > ai.train_image_data.image_count)
             {
                 data_id = 0;
             }
