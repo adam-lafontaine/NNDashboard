@@ -440,7 +440,10 @@ namespace display
         auto& ai = state.ai_state;
         auto& mlp = ai.mlp;
 
-        auto is_allocated = mlp.memory.ok;
+        auto data_loaded = state.ai_data_status == DataStatus::Loaded;
+        auto memory_allocated = mlp.memory.ok;
+
+        auto is_disabled = !data_loaded || memory_allocated;
 
         ImGui::Begin("Topology");
 
@@ -451,7 +454,7 @@ namespace display
         static int n_inner_layers = layer_size_min;
         static int inner_layers[N] = { 0 };
 
-        if (is_allocated) { ImGui::BeginDisabled(); }
+        if (is_disabled) { ImGui::BeginDisabled(); }
 
         static int train_option = mlai::TRAIN_ALL_LABELS;
         ImGui::RadioButton("All", &train_option, mlai::TRAIN_ALL_LABELS);
@@ -475,7 +478,8 @@ namespace display
             topology.set_output_size(2);
         }
 
-        ImGui::SliderInt("Inner layers", &n_inner_layers, 1, (int)N);
+        ImGui::Text("Inner layers");
+        ImGui::SliderInt("##", &n_inner_layers, 1, (int)N);
 
         ImGui::Text("%u", topology.get_input_size());
         ImGui::SameLine();
@@ -487,7 +491,7 @@ namespace display
             ImGui::SameLine();
         }
 
-        if (is_allocated) { ImGui::EndDisabled(); }        
+        if (is_disabled) { ImGui::EndDisabled(); }        
 
         ImGui::Text("%u", topology.get_output_size());
 
@@ -502,7 +506,7 @@ namespace display
 
         if (state.ai_data_status == DataStatus::Loaded)
         {
-            if (is_allocated) { ImGui::BeginDisabled(); }
+            if (memory_allocated) { ImGui::BeginDisabled(); }
 
             ImGui::SameLine();
             if (ImGui::Button("Create"))
@@ -510,7 +514,7 @@ namespace display
                 internal::create_ai(state);
             }
 
-            if (is_allocated)
+            if (memory_allocated)
             {
                 ImGui::EndDisabled();
                 ImGui::SameLine();
@@ -518,7 +522,7 @@ namespace display
             }
         }        
 
-        if (is_allocated)
+        if (memory_allocated)
         {
             ImGui::SameLine();
             if (ImGui::Button("Reset"))
