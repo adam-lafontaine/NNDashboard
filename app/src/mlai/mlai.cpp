@@ -90,7 +90,7 @@ namespace mlai
         state.cnn_gradient = img::make_view(w_gradient, h_gradient, state.cnn_buffer);
         state.cnn_pool = img::make_view(w_pool, h_pool, state.cnn_buffer);
 
-        state.topology.set_input_size(w_pool * h_pool);
+        state.topology.set_input_size(2 * w_pool * h_pool);
 
         return true;
     }
@@ -167,8 +167,6 @@ namespace mlai
         u32 data_count = data.image_count;
         state.data_id = 0;
         state.epoch_id = 0;
-
-        auto& mlp = state.mlp;
 
         std::function<Span32()> get_expected;
         if (state.train_label == TRAIN_ALL_LABELS)
