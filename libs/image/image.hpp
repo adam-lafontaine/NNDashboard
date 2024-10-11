@@ -334,3 +334,11 @@ namespace image
 
     void gradient_y(GrayView const& src, GrayView const& dst);
 }
+
+
+/* scale */
+
+namespace image
+{
+    void scale_down_max(GrayView const& src, GrayView const& dst);
+}

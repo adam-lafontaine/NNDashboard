@@ -170,6 +170,9 @@ namespace image
         auto r3 = row_begin(src, 2);
         auto d = row_begin(dst, 0);
 
+        auto sw = src.width;
+        auto dw = dst.width;
+
         for (u32 y = 0; y < dst.height; y++)
         {
             for (u32 x = 0; x < dst.width; x++)
@@ -178,10 +181,47 @@ namespace image
                 d[x] = num::round_to_unsigned<u8>(g);
             }
 
-            r1 += src.width;
-            r2 += src.width;
-            r3 += src.width;
-            d += dst.width;
+            r1 += sw;
+            r2 += sw;
+            r3 += sw;
+            d += dw;
+        }
+    }
+}
+
+
+/* scale */
+
+namespace image
+{
+    void scale_down_max(GrayView const& src, GrayView const& dst)
+    {
+        constexpr u32 scale = 2;
+
+        assert(src.matrix_data_);
+        assert(dst.matrix_data_);
+        assert(dst.width == src.width / scale);
+        assert(dst.height == src.height / scale);
+
+        auto r1 = row_begin(src, 0);
+        auto r2 = row_begin(src, 1);
+        auto d = row_begin(dst, 0);
+
+        auto sw = scale * src.width;
+        auto dw = dst.width;
+
+        for (u32 y = 0; y < dst.height; y++)
+        {
+            u32 sx = 0;
+            for (u32 x = 0; x < dst.width; x++)
+            {
+                d[x] = num::max(r1[sx], r1[sx + 1], r2[sx], r2[sx + 1]);
+                sx += scale;
+            }
+
+            r1 += sw;
+            r2 += sw;
+            d += dw;
         }
     }
 }

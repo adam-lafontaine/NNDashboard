@@ -3,7 +3,7 @@
 #include "../span/span.hpp"
 
 
-namespace nn
+namespace mlp
 {
     using Span32 = SpanView<f32>;
     using Matrix32 = MatrixView2D<f32>;
@@ -39,7 +39,7 @@ namespace nn
     };
 
 
-    class NetTopology
+    class MLP_Topology
     {
     public:
         constexpr static u32 MAX_INNER_LAYERS = 16;
@@ -79,7 +79,7 @@ namespace nn
     class MultiLayerPerceptron
     {
     public:
-        constexpr static u32 MAX_LAYERS = NetTopology::MAX_LAYERS;
+        constexpr static u32 MAX_LAYERS = MLP_Topology::MAX_LAYERS;
 
         SpanView<Layer> layers;
 
@@ -92,6 +92,7 @@ namespace nn
     };
 
     using Net = MultiLayerPerceptron;
+    using NetTopology = MLP_Topology;
 
 
     inline void destroy(Net& net)
@@ -104,13 +105,13 @@ namespace nn
 
     void create(Net& net, NetTopology topology);
 
-    void eval(Net const& net, Span32 const& input);
+    void eval(Net const& net);
 
-    void eval(Net const& net, Span32 const& input, Span32 const& expected);
+    void eval(Net const& net, Span32 const& expected);
 
-    void update(Net const& net, Span32 const& input, Span32 const& expected);
+    void update(Net const& net, Span32 const& expected);
 
-    int prediction(Net const& net);
+    int prediction_label(Net const& net);
 
     f32 abs_error(Net const& net);
 }

@@ -45,8 +45,6 @@ namespace display
         ImTextureID input_texture = 0;
 
         mlai::DataFiles ai_files;
-
-        nn::NetTopology topology{};
     };
 
 
@@ -160,9 +158,6 @@ namespace internal
             sdl::display_error("Train/test data unavailable");
             return false;
         }
-
-        state.topology.set_input_size(mnist::input_data_at(ai.test_image_data, 0).length);
-        //state.topology.set_output_size(mnist::label_data_at(ai.test_labels, 0).length);
 
         return true;
     }

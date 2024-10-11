@@ -110,6 +110,7 @@ image_h += $(span_h)
 
 image_c := $(image)/image.cpp
 image_c += $(image_h)
+image_c += $(numeric_h)
 
 #*************
 
