@@ -324,3 +324,13 @@ namespace image
 
     void fill(SubView const& view, Pixel color);
 }
+
+
+/* gradient */
+
+namespace image
+{
+    void gradient_x(GrayView const& src, GrayView const& dst);
+
+    void gradient_y(GrayView const& src, GrayView const& dst);
+}
