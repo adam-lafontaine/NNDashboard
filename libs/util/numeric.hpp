@@ -179,6 +179,20 @@ namespace numeric
 
 
     template <typename T>
+    inline constexpr T min(T a, T b, T c, T d)
+    {
+        return min(min(a, b), min(c, d));
+    }
+
+
+    template <typename T>
+    inline constexpr T max(T a, T b, T c, T d)
+    {
+        return max(max(a, b), max(c, d));
+    }
+
+
+    template <typename T>
     inline constexpr T cxpr_floor(T value)
     { 
         return (T)cxpr_round_to_signed<i64>(value - 0.5f);

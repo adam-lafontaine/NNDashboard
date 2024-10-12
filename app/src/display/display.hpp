@@ -45,8 +45,6 @@ namespace display
         ImTextureID input_texture = 0;
 
         mlai::DataFiles ai_files;
-
-        nn::NetTopology topology{};
     };
 
 
@@ -160,9 +158,6 @@ namespace internal
             sdl::display_error("Train/test data unavailable");
             return false;
         }
-
-        state.topology.set_input_size(mnist::input_data_at(ai.test_image_data, 0).length);
-        //state.topology.set_output_size(mnist::label_data_at(ai.test_labels, 0).length);
 
         return true;
     }
@@ -281,16 +276,16 @@ namespace internal
     static void reset_ai(DisplayState& state)
     {
         stop_ai(state);
-        nn::destroy(state.ai_state.mlp);
+        mlp::destroy(state.ai_state.mlp);
     }
 
 
     static void create_ai(DisplayState& state)
     {
-        auto& topology = state.topology;
+        auto& topology = state.ai_state.topology;
         auto& mlp = state.ai_state.mlp;
 
-        nn::create(mlp, topology);
+        mlp::create(mlp, topology);
     }
 
 } // internal
@@ -430,14 +425,14 @@ namespace display
 
     static void topology_window(DisplayState& state)
     {
-        constexpr auto N = nn::NetTopology::MAX_INNER_LAYERS;
+        constexpr auto N = mlp::NetTopology::MAX_INNER_LAYERS;
 
         constexpr auto layer_labels_array = internal::make_imgui_labels<N>("##LayerLabels");
 
         auto layer_labels = layer_labels_array.labels;
 
-        auto& topology = state.topology;
         auto& ai = state.ai_state;
+        auto& topology = ai.topology;        
         auto& mlp = ai.mlp;
 
         auto data_loaded = state.ai_data_status == DataStatus::Loaded;
@@ -505,7 +500,7 @@ namespace display
             topology.set_inner_size_at((u32)inner_layers[i], { u8(i) });
         }
 
-        ImGui::Text("Bytes: %u", nn::mlp_bytes(topology));
+        ImGui::Text("Bytes: %u", mlp::mlp_bytes(topology));
 
         if (state.ai_data_status == DataStatus::Loaded)
         {
@@ -807,19 +802,6 @@ namespace display
             }
 
             ImGui::EndTable();
-        }
-
-        static u32 data_id = 0;
-
-        if (ImGui::Button("Next"))
-        {
-            data_id++;
-            if (data_id > ai.train_image_data.image_count)
-            {
-                data_id = 0;
-            }
-
-            mlai::eval_at(ai, data_id);
         }
 
         ImGui::End();

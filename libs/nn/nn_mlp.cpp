@@ -7,7 +7,7 @@
 #include <cstdlib>
 
 
-namespace nn
+namespace mlp
 {
     namespace num = numeric;
 
@@ -156,7 +156,7 @@ namespace nn
         u32 n_weights = 0;
         
         // input layer
-        nn::TopologyIndex t_id = { (u8)0 };
+        TopologyIndex t_id = { (u8)0 };
         auto len_front = topology.get_input_size();
         auto len_back = topology.get_inner_size_at(t_id);
 
@@ -206,7 +206,7 @@ namespace nn
 }
 
 
-namespace nn
+namespace mlp
 {
     u32 mlp_bytes(NetTopology const& topology)
     {
@@ -235,7 +235,7 @@ namespace nn
         net.layers.length = N + 1;
 
         // input layer
-        nn::TopologyIndex t_id = { (u8)0 };
+        TopologyIndex t_id = { (u8)0 };
         auto len_front = topology.get_input_size();
         auto len_back = topology.get_inner_size_at(t_id);
         {
@@ -322,10 +322,8 @@ namespace nn
     }
 
 
-    void eval(Net const& net, Span32 const& input)
+    void eval(Net const& net)
     {
-        span::copy(input, net.input);
-
         for (u32 i = 0; i < net.layers.length; i++)
         {
             eval_forward(net.layers.data[i]);
@@ -335,17 +333,17 @@ namespace nn
     }
 
 
-    void eval(Net const& net, Span32 const& input, Span32 const& expected)
+    void eval(Net const& net, Span32 const& expected)
     {
-        eval(net, input);
+        eval(net);
 
         span::sub(expected, net.output, net.error);
     }
 
 
-    void update(Net const& net, Span32 const& input, Span32 const& expected)
+    void update(Net const& net, Span32 const& expected)
     {
-        eval(net, input, expected);
+        eval(net, expected);
 
         auto N = net.layers.length;
 
@@ -359,19 +357,17 @@ namespace nn
     }
 
 
-    int prediction(Net const& net)
+    int prediction_label(Net const& net)
     {
-        int p = -1;
-
         for (u32 i = 0; i < net.output.length; i++)
         {
             if (net.output.data[i] > 0.5f)
             {
-                p = (int)i;
+                return (int)i;
             }
         }
 
-        return p;
+        return -1;
     }
 
 

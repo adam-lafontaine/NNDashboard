@@ -48,7 +48,7 @@ namespace mnist
     void destroy_data(LabelData& data);
 
 
-    SpanView<f32> input_data_at(ImageData const& data, u32 index);
+    SpanView<f32> raw_input_data_at(ImageData const& data, u32 index);
 
     SpanView<f32> label_data_at(LabelData const& data, u32 index);
 

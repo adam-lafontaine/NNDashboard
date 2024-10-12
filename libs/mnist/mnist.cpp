@@ -156,7 +156,7 @@ namespace mnist
     }
 
 
-    SpanView<f32> input_data_at(ImageData const& data, u32 index)
+    SpanView<f32> raw_input_data_at(ImageData const& data, u32 index)
     {
         auto len = data.image_width * data.image_height;
 

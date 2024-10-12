@@ -4,8 +4,8 @@ GPP += -std=c++20
 GPP += -mavx
 GPP += -mwindows
 
-GPP += -O3
-GPP += -DNDEBUG
+#GPP += -O3
+#GPP += -DNDEBUG
 GPP += -DALLOC_COUNT
 
 # directories
@@ -125,6 +125,7 @@ image_h += $(span_h)
 
 image_c := $(image)/image.cpp
 image_c += $(image_h)
+image_c += $(numeric_h)
 
 #*************
 

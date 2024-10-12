@@ -13567,7 +13567,7 @@ void ImGui::LoadIniSettingsFromMemory(const char* ini_data, size_t ini_size)
 
 void ImGui::SaveIniSettingsToDisk(const char* ini_filename)
 {
-#if defined (USE_INI_STR) && ! defined (SAVE_INI_STR) 
+#ifdef DO_NOT_SAVE_INI
 
     return;
 
@@ -13585,6 +13585,12 @@ void ImGui::SaveIniSettingsToDisk(const char* ini_filename)
         return;
     ImFileWrite(ini_data, sizeof(char), ini_data_size, f);
     ImFileClose(f);
+
+#ifdef SAVE_INI_STR_SCRIPT
+
+    ini_str::ini_to_str_script();
+
+#endif
 
 #endif
 }
