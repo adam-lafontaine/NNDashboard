@@ -82,12 +82,12 @@ namespace mlp
         
         for (u32 o = 0; o < output.length; o++)
         {
-            auto w = row_span(layer.weights, o);            
+            auto w = row_span(layer.weights, o);
 
             auto sum = span::dot(w, a_in) + output.bias[o];
 
             // reLU
-            output.activation[o] = sum > 0.0f ? sum : 0.0f;
+            output.activation[o] = num::max(0.0f, sum);
         }
     }
 
