@@ -1,6 +1,6 @@
 # NNDashboard
 
-A desktop application for training and testing neural network (Multi Layer Perceptron)
+A desktop application for training and testing a Convolutional Neural Network
 
 * Uses the MNIST dataset on handwritten digits
 * A zipped copy of the data is available in the 'downloads' folder along with the executable (Windows)
