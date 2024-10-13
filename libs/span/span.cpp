@@ -21,9 +21,13 @@
 namespace span
 {
     using i128 = __m128i;
+    using f128 = __m128;
 
 #ifdef SPAN_SIMD_256
+
     using i256 = __m256i;
+    using f256 = __m256;
+
 #endif
 }
 
@@ -326,7 +330,7 @@ namespace span
 
 namespace span
 {
-    static void fill_u8_64(u8* dst, u8 value, u64 len_u8)
+    static void fill_u8_8(u8* dst, u8 value, u64 len_u8)
     {
         for (u32 i = 0; i < len_u8; i++)
         {
@@ -408,7 +412,7 @@ namespace span
 
 namespace span
 {
-    static void fill_u32_64(u32* dst, u32 value, u64 len_u32)
+    static void fill_u32_32(u32* dst, u32 value, u64 len_u32)
     {
         for (u32 i = 0; i < len_u32; i++)
         {
@@ -507,6 +511,98 @@ namespace span
 }
 
 
+/* dot */
+
+namespace span
+{
+    static f32 dot_32(f32* a, f32* b, u32 len)
+    {
+        f32 res = 0.0f;
+        for (u32 i = 0; i < len; i++)
+        {
+            res += a[i] * b[i];
+        }
+
+        return res;
+    }
+
+
+    static f32 dot_128(f32* a, f32* b, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        f128 vsum = _mm_setzero_ps();
+        alignas(N * sizeof(f32)) f32 res[N];
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+            f128 vm = _mm_mul_ps(va, vb);
+            vsum = _mm_add_ps(vsum, vm);
+        }
+
+        _mm_storeu_ps(res, vsum);
+        f32 sum = res[0] + res[1] + res[2] + res[3];
+
+        for (; i < len; i++)
+        {
+            sum += a[i] + b[i];
+        }
+
+        return sum;
+
+        #else
+
+        return dot_32(a, b, len);
+
+        #endif
+    }
+
+
+    static f32 dot_256(f32* a, f32* b, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+        
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        f256 vsum = _mm256_setzero_ps();
+        alignas(N * sizeof(f32)) f32 res[N];
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+            f256 vm = _mm256_mul_ps(va, vb);
+            vsum = _mm256_add_ps(vsum, vm);
+        }
+
+        _mm256_storeu_ps(res, vsum);
+        f32 sum = res[0] + res[1] + res[2] + res[3] +
+            res[4] + res[5] + res[6] + res[7];
+
+        for (; i < len; i++)
+        {
+            sum += a[i] + b[i];
+        }
+
+        return sum;
+
+        #else
+
+        return dot_128(a, b, len);
+
+        #endif
+    }
+}
+
+
 /* api */
 
 namespace span
@@ -555,7 +651,7 @@ namespace span
         {
         case 0:
         case 1:
-            fill_u8_64(dst, value, len_u8);
+            fill_u8_8(dst, value, len_u8);
             break;
         case 2:
         case 3:
@@ -591,7 +687,7 @@ namespace span
         {
         case 0:
         case 1:
-            fill_u32_64(dst, value, len_u32);
+            fill_u32_32(dst, value, len_u32);
             break;
         case 2:
         case 3:
@@ -616,5 +712,61 @@ namespace span
         default:
             fill_u32_1024(dst, value, len_u32);
         }
+    }
+}
+
+
+namespace span
+{
+    void add(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
+    {
+        auto len = a.length; // == b.length == dst.length
+
+        for (u32 i = 0; i < len; i++)
+        {
+            dst.data[i] = a.data[i] + b.data[i];
+        }
+    }
+    
+
+    void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
+    {
+        auto len = a.length; // == b.length == dst.length
+
+        for (u32 i = 0; i < len; i++)
+        {
+            dst.data[i] = a.data[i] - b.data[i];
+        }
+    }
+    
+
+    f32 dot(SpanView<f32> const& a, SpanView<f32> const& b)
+    {
+        auto len = a.length; // == b.length
+
+        switch (len)
+        {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            return dot_32(a.data, b.data, len);
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            return dot_128(a.data, b.data, len);
+
+        default: 
+            return dot_256(a.data, b.data, len);
+        }
+
+        f32 res = 0.0f;
+        for (u32 i = 0; i < len; i++)
+        {
+            res += a.data[i] * b.data[i];
+        }
+
+        return res;
     }
 }
