@@ -8,8 +8,8 @@ GPP += -mwindows
 #GPP += -DNDEBUG
 GPP += -DALLOC_COUNT
 
-GPP += -D__AVX__
-GPP += -D__AVX2__
+#GPP += -D__AVX__
+#GPP += -D__AVX2__
 
 # directories
 SDL := C:\SDL2\SDL2-2.30.5\x86_64-w64-mingw32
