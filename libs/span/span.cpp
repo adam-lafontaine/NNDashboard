@@ -2,6 +2,8 @@
 
 #include "span.hpp"
 
+#include <cassert>
+
 #ifdef __AVX__
 #define SPAN_SIMD_128
 #endif
@@ -849,6 +851,9 @@ namespace span
     {
         auto len = a.length; // == b.length == dst.length
 
+        assert(b.length == len);
+        assert(dst.length == len);
+
         switch (len)
         {
         case 0:
@@ -875,6 +880,9 @@ namespace span
     void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
     {
         auto len = a.length; // == b.length == dst.length
+
+        assert(b.length == len);
+        assert(dst.length == len);
 
         switch (len)
         {
@@ -903,6 +911,8 @@ namespace span
     {
         auto len = a.length; // == b.length
 
+        assert(b.length == len);
+
         switch (len)
         {
         case 0:
@@ -919,13 +929,5 @@ namespace span
         default: 
             return dot_256(a.data, b.data, len);
         }
-
-        f32 res = 0.0f;
-        for (u32 i = 0; i < len; i++)
-        {
-            res += a.data[i] * b.data[i];
-        }
-
-        return res;
     }
 }

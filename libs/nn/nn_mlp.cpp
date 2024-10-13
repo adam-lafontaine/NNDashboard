@@ -64,7 +64,9 @@ namespace mlp
             total += span.data[i];
         }
 
-        auto f = total <= 0.0f ? 0.0f : 1.0f / total;
+        assert(total >= 0.0f);
+
+        auto f = 1.0f / total;
 
         for (u32 i = 0; i < span.length; i++)
         {
@@ -84,10 +86,12 @@ namespace mlp
         {
             auto w = row_span(layer.weights, o);
 
-            auto sum = span::dot(w, a_in) + output.bias[o];
+            auto dot = span::dot(w, a_in);
+
+            auto sum = dot + output.bias[o];
 
             // reLU
-            output.activation[o] = num::max(0.0f, sum);
+            output.activation[o] = sum < 0.0f ? 0.0f : sum;
         }
     }
 
@@ -97,11 +101,11 @@ namespace mlp
         auto front = layer.io_front;
         auto back = layer.io_back;
 
-        f32 eta = 0.00001f;
+        f32 eta = 0.000001f;
 
         for (u32 b = 0; b < back.length; b++)
         {
-            back.delta[b] = (back.activation[b] > 0.0f) * back.error[b];
+            back.delta[b] = (back.activation[b] > 0.0f) ? back.error[b] : 0.0f;
             back.bias[b] += eta * back.delta[b];
         }
 
@@ -126,7 +130,7 @@ namespace mlp
         auto front = layer.io_front;
         auto back = layer.io_back;
 
-        f32 eta = 0.00001f;
+        f32 eta = 0.000001f;
 
         for (u32 b = 0; b < back.length; b++)
         {
@@ -225,7 +229,7 @@ namespace mlp
         auto view = span::make_view(buffer);
         for (u32 i = 0; i < view.length; i++)
         {
-            view.data[i] = -1.0f + 2.0f * (f32)rand() / RAND_MAX;
+            view.data[i] = (f32)rand() / RAND_MAX;
         }
 
         net.layers.data = net.layer_data;        
@@ -361,7 +365,7 @@ namespace mlp
     {
         for (u32 i = 0; i < net.output.length; i++)
         {
-            if (net.output.data[i] > 0.5f)
+            if (net.output.data[i] > 0.8f)
             {
                 return (int)i;
             }
