@@ -4,7 +4,7 @@ GPP += -std=c++20
 GPP += -mavx
 GPP += -mwindows
 
-GPP += -O3
+#GPP += -O3
 #GPP += -DNDEBUG
 GPP += -DALLOC_COUNT
 

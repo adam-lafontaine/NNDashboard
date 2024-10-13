@@ -511,6 +511,139 @@ namespace span
 }
 
 
+/* add */
+
+namespace span
+{
+    static void add_32(f32* a, f32* b, f32* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; i++)
+        {
+            dst[i] = a[i] + b[i];
+        }
+    }
+
+
+    static void add_128(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+
+            _mm_storeu_ps(dst + i, _mm_add_ps(va, vb));
+        }
+
+        add_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        add_32(a, b, dst, len);
+
+        #endif
+    }
+
+
+    static void add_256(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+
+            _mm256_storeu_ps(dst + i, _mm256_add_ps(va, vb));
+        }
+
+        add_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        add_128(a, b, dst, len);
+
+        #endif
+    }
+}
+
+
+/* sub */
+
+namespace span
+{
+    static void sub_32(f32* a, f32* b, f32* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; i++)
+        {
+            dst[i] = a[i] - b[i];
+        }
+    }
+
+
+    static void sub_128(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+
+            _mm_storeu_ps(dst + i, _mm_sub_ps(va, vb));
+        }
+
+        sub_32(a + i, b + i, dst + i, len - i);
+
+
+        #else
+
+        sub_32(a, b, dst, len);
+
+        #endif
+    }
+
+
+    static void sub_256(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+
+            _mm256_storeu_ps(dst + i, _mm256_sub_ps(va, vb));
+        }
+
+        sub_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        sub_128(a, b, dst, len);
+
+        #endif
+    }
+}
+
+
 /* dot */
 
 namespace span
@@ -549,10 +682,7 @@ namespace span
         _mm_storeu_ps(res, vsum);
         f32 sum = res[0] + res[1] + res[2] + res[3];
 
-        for (; i < len; i++)
-        {
-            sum += a[i] + b[i];
-        }
+        sum += dot_32(a + i, b + i, len - i);
 
         return sum;
 
@@ -587,10 +717,7 @@ namespace span
         f32 sum = res[0] + res[1] + res[2] + res[3] +
             res[4] + res[5] + res[6] + res[7];
 
-        for (; i < len; i++)
-        {
-            sum += a[i] + b[i];
-        }
+        sum += dot_32(a + i, b + i, len - i);
 
         return sum;
 
@@ -722,9 +849,25 @@ namespace span
     {
         auto len = a.length; // == b.length == dst.length
 
-        for (u32 i = 0; i < len; i++)
+        switch (len)
         {
-            dst.data[i] = a.data[i] + b.data[i];
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            add_32(a.data, b.data, dst.data, len);
+            break;
+
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            add_128(a.data, b.data, dst.data, len);
+            break;
+
+        default: 
+            add_256(a.data, b.data, dst.data, len);
+            break;
         }
     }
     
@@ -733,9 +876,25 @@ namespace span
     {
         auto len = a.length; // == b.length == dst.length
 
-        for (u32 i = 0; i < len; i++)
+        switch (len)
         {
-            dst.data[i] = a.data[i] - b.data[i];
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            sub_32(a.data, b.data, dst.data, len);
+            break;
+
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            sub_128(a.data, b.data, dst.data, len);
+            break;
+
+        default: 
+            sub_256(a.data, b.data, dst.data, len);
+            break;
         }
     }
     
