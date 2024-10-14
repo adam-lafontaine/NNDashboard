@@ -151,7 +151,7 @@ namespace mlp
     }
 
 
-    static u32 net_element_count(NetTopology topology)
+    static u32 mlp_element_count(NetTopology topology)
     {
         u32 n_activation = 0;
         u32 n_bias = 0;
@@ -214,14 +214,14 @@ namespace mlp
 {
     u32 mlp_bytes(NetTopology const& topology)
     {
-        return net_element_count(topology) * sizeof(f32);
+        return mlp_element_count(topology) * sizeof(f32);
     }
 
 
     void create(Net& net, NetTopology topology)
     { 
         auto& buffer = net.memory;
-        if (!mb::create_buffer(buffer, net_element_count(topology), "mlp"))
+        if (!mb::create_buffer(buffer, mlp_element_count(topology), "mlp"))
         {
             assert("*** mlp buffer failed ***" && false);
         }
@@ -322,7 +322,10 @@ namespace mlp
             net.error = span::to_span(back.error, len_back);
         }
 
-        assert(buffer.capacity_ - buffer.size_ == 0);
+        // TODO?:
+        // push all weights to the end of the buffer to enable saving a model
+
+        assert(buffer.size_ == buffer.capacity_);
     }
 
 

@@ -849,7 +849,7 @@ namespace span
 {
     void add(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
     {
-        auto len = a.length; // == b.length == dst.length
+        auto len = a.length;
 
         assert(b.length == len);
         assert(dst.length == len);
@@ -879,7 +879,7 @@ namespace span
 
     void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
     {
-        auto len = a.length; // == b.length == dst.length
+        auto len = a.length;
 
         assert(b.length == len);
         assert(dst.length == len);
@@ -909,7 +909,7 @@ namespace span
 
     f32 dot(SpanView<f32> const& a, SpanView<f32> const& b)
     {
-        auto len = a.length; // == b.length
+        auto len = a.length;
 
         assert(b.length == len);
 
