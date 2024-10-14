@@ -2,6 +2,8 @@
 
 #include "span.hpp"
 
+#include <cassert>
+
 #ifdef __AVX__
 #define SPAN_SIMD_128
 #endif
@@ -21,9 +23,13 @@
 namespace span
 {
     using i128 = __m128i;
+    using f128 = __m128;
 
 #ifdef SPAN_SIMD_256
+
     using i256 = __m256i;
+    using f256 = __m256;
+
 #endif
 }
 
@@ -44,107 +50,11 @@ namespace span
 }
 
 
-/* bit_copy simd */
+/* bcopy */
 
 namespace span
 {
-    static inline void bit_copy_128(u8* src, u8* dst)
-    {
-        #ifdef SPAN_SIMD_128
-        _mm_storeu_si128((i128*)dst, _mm_loadu_si128((i128*)src));
-        #else
-        ((u64*)dst)[0] = ((u64*)src)[0];
-        ((u64*)dst)[1] = ((u64*)src)[1];
-        #endif
-    }
-
-
-    static inline void bit_copy_256(u8* src, u8* dst)
-    {
-        #ifdef SPAN_SIMD_256
-        _mm256_storeu_si256((i256*)dst, _mm256_loadu_si256((i256*)src));
-        #else
-        bit_copy_128(src, dst);
-        bit_copy_128(src + size128, dst + size128);
-        #endif
-    }
-}
-
-
-/* bit_fill simd */
-
-namespace span
-{
-#ifndef SPAN_SIMD_128
-
-    static inline void bit_fill_u8_64(u8* dst, u8 value)
-    {
-        dst[0] = value;
-        dst[1] = value;
-        dst[2] = value;
-        dst[3] = value;
-        dst[4] = value;
-        dst[5] = value;
-        dst[6] = value;
-        dst[7] = value;
-    }
-
-#endif
-
-
-    static inline void bit_fill_u8_128(u8* dst, u8 value)
-    {
-        #ifdef SPAN_SIMD_128
-        _mm_storeu_si128((i128*)dst, _mm_set1_epi8(value));
-        #else
-        bit_fill_u8_64(dst, value);
-        bit_fill_u8_64(dst + size64, value);
-        #endif
-    }
-
-
-    static inline void bit_fill_u8_256(u8* dst, u8 value)
-    {
-        #ifdef SPAN_SIMD_256
-        _mm256_storeu_si256((i256*)dst, _mm256_set1_epi8(value));
-        #else
-        bit_fill_u8_128(dst, value);
-        bit_fill_u8_128(dst + size128, value);
-        #endif
-    }
-
-
-    static inline void bit_fill_i32_128(u8* dst, i32 value)
-    {
-        #ifdef SPAN_SIMD_128
-        _mm_storeu_si128((i128*)dst, _mm_set1_epi32(value));
-        #else
-        ((i32*)dst)[0] = value;
-        ((i32*)dst)[1] = value;
-        ((i32*)dst)[2] = value;
-        ((i32*)dst)[3] = value;
-        #endif
-    }
-
-
-    static inline void bit_fill_i32_256(u8* dst, i32 value)
-    {
-        #ifdef SPAN_SIMD_256
-        _mm256_storeu_si256((i256*)dst, _mm256_set1_epi32(value));
-        #else
-        bit_fill_i32_128(dst, value);
-        bit_fill_i32_128(dst + size128, value);
-        #endif
-    }
-    
-}
-
-
-/* bit_copy_64 */
-
-namespace span
-{
-    static void bit_copy_64(u8* src, u8* dst, u32 n_u8)
+    static void bcopy_64(u8* src, u8* dst, u32 n_u8)
     {
         switch (n_u8)
         {
@@ -189,69 +99,50 @@ namespace span
             break;
         }
     }
-}
 
 
-/* bit_copy */
-
-namespace span
-{
-    static inline void bit_copy_512(u8* src, u8* dst)
+    static inline void bcopy_128(u8* src, u8* dst)
     {
-        bit_copy_256(src, dst);
-        bit_copy_256(src + size256, dst + size256);
+        #ifdef SPAN_SIMD_128
+        _mm_storeu_si128((i128*)dst, _mm_loadu_si128((i128*)src));
+        #else
+        ((u64*)dst)[0] = ((u64*)src)[0];
+        ((u64*)dst)[1] = ((u64*)src)[1];
+        #endif
     }
 
 
-    static inline void bit_copy_1024(u8* src, u8* dst)
+    static inline void bcopy_256(u8* src, u8* dst)
     {
-        bit_copy_512(src, dst);
-        bit_copy_512(src + size512, dst + size512);
+        #ifdef SPAN_SIMD_256
+        _mm256_storeu_si256((i256*)dst, _mm256_loadu_si256((i256*)src));
+        #else
+        bcopy_128(src, dst);
+        bcopy_128(src + size128, dst + size128);
+        #endif
     }
-}
+   
 
-
-/* bit_fill */
-
-namespace span
-{
-
-    static inline void bit_fill_u8_512(u8* dst, u8 value)
+    static inline void bcopy_512(u8* src, u8* dst)
     {
-        bit_fill_u8_256(dst, value);
-        bit_fill_u8_256(dst + size256, value);
+        bcopy_256(src, dst);
+        bcopy_256(src + size256, dst + size256);
     }
 
 
-    static inline void bit_fill_u8_1024(u8* dst, u8 value)
+    static inline void bcopy_1024(u8* src, u8* dst)
     {
-        bit_fill_u8_512(dst, value);
-        bit_fill_u8_512(dst + size512, value);
-    }
-
-
-    static inline void bit_fill_i32_512(u8* dst, i32 value)
-    {
-        
-        bit_fill_i32_256(dst, value);
-        bit_fill_i32_256(dst + size256, value);
-    }
-
-
-    static inline void bit_fill_i32_1024(u8* dst, u32 value)
-    {
-        bit_fill_i32_512(dst, value);
-        bit_fill_i32_512(dst + size512, value);
+        bcopy_512(src, dst);
+        bcopy_512(src + size512, dst + size512);
     }
 }
 
 
-
-/* copy */
+/* copy_u8 */
 
 namespace span
 {
-    static void copy_64(u8* src, u8* dst, u64 len_u8)
+    static void copy_u8_64(u8* src, u8* dst, u64 len_u8)
     {
         auto const len64 = len_u8 / size64;
         auto const src64 = (u64*)src;
@@ -266,11 +157,11 @@ namespace span
         auto const src8 = (u8*)(src64 + len64);
         auto const dst8 = (u8*)(dst64 + len64);
 
-        bit_copy_64(src8, dst8, len8);
+        bcopy_64(src8, dst8, len8);
     }
 
 
-    static void copy_128(u8* src, u8* dst, u64 len_u8)
+    static void copy_u8_128(u8* src, u8* dst, u64 len_u8)
     {
         auto const n128 = len_u8 / size128;
         auto const end128 = n128 * size128;
@@ -279,15 +170,15 @@ namespace span
 
         for (; i < end128; i += size128)
         {
-            bit_copy_128(src + i, dst + i);
+            bcopy_128(src + i, dst + i);
         }
 
         i = len_u8 - size128;
-        bit_copy_128(src + i, dst + i);
+        bcopy_128(src + i, dst + i);
     }
 
 
-    static void copy_256(u8* src, u8* dst, u64 len_u8)
+    static void copy_u8_256(u8* src, u8* dst, u64 len_u8)
     {
         auto const n256 = len_u8 / size256;
         auto const end256 = n256 * size256;
@@ -296,15 +187,15 @@ namespace span
 
         for (; i < end256; i += size256)
         {            
-            bit_copy_256(src + i, dst + i);
+            bcopy_256(src + i, dst + i);
         }
 
         i = len_u8 - size256;
-        bit_copy_256(src + i, dst + i);
+        bcopy_256(src + i, dst + i);
     }
 
 
-    static void copy_512(u8* src, u8* dst, u64 len_u8)
+    static void copy_u8_512(u8* src, u8* dst, u64 len_u8)
     {
         auto const n512 = len_u8 / size512;
         auto const end512 = n512 * size512;
@@ -313,15 +204,15 @@ namespace span
 
         for(; i < end512; i += size512)
         {
-            bit_copy_512(src + i, dst + i);
+            bcopy_512(src + i, dst + i);
         }
 
         i = len_u8 - size512;
-        bit_copy_512(src + i, dst + i);
+        bcopy_512(src + i, dst + i);
     }
 
 
-    static void copy_1024(u8* src, u8* dst, u64 len_u8)
+    static void copy_u8_1024(u8* src, u8* dst, u64 len_u8)
     {
         auto const n1024 = len_u8 / size1024;
         auto const end1024 = n1024 * size1024;
@@ -330,12 +221,110 @@ namespace span
 
         for(; i < end1024; i += size1024)
         {
-            bit_copy_1024(src + i, dst + i);
+            bcopy_1024(src + i, dst + i);
         }
 
         i = len_u8 - size1024;
-        bit_copy_1024(src + i, dst + i);
+        bcopy_1024(src + i, dst + i);
     }
+}
+
+
+/* bfill */
+
+namespace span
+{
+#ifndef SPAN_SIMD_128
+
+    static inline void bfill_u8_64(u8* dst, u8 value)
+    {
+        dst[0] = value;
+        dst[1] = value;
+        dst[2] = value;
+        dst[3] = value;
+        dst[4] = value;
+        dst[5] = value;
+        dst[6] = value;
+        dst[7] = value;
+    }
+
+#endif
+
+
+    static inline void bfill_u8_128(u8* dst, u8 value)
+    {
+        #ifdef SPAN_SIMD_128
+        _mm_storeu_si128((i128*)dst, _mm_set1_epi8(value));
+        #else
+        bfill_u8_64(dst, value);
+        bfill_u8_64(dst + size64, value);
+        #endif
+    }
+
+
+    static inline void bfill_u8_256(u8* dst, u8 value)
+    {
+        #ifdef SPAN_SIMD_256
+        _mm256_storeu_si256((i256*)dst, _mm256_set1_epi8(value));
+        #else
+        bfill_u8_128(dst, value);
+        bfill_u8_128(dst + size128, value);
+        #endif
+    }
+
+
+    static inline void bfill_u8_512(u8* dst, u8 value)
+    {
+        bfill_u8_256(dst, value);
+        bfill_u8_256(dst + size256, value);
+    }
+
+
+    static inline void bfill_u8_1024(u8* dst, u8 value)
+    {
+        bfill_u8_512(dst, value);
+        bfill_u8_512(dst + size512, value);
+    }
+
+
+    static inline void bfill_i32_128(u8* dst, i32 value)
+    {
+        #ifdef SPAN_SIMD_128
+        _mm_storeu_si128((i128*)dst, _mm_set1_epi32(value));
+        #else
+        ((i32*)dst)[0] = value;
+        ((i32*)dst)[1] = value;
+        ((i32*)dst)[2] = value;
+        ((i32*)dst)[3] = value;
+        #endif
+    }
+
+
+    static inline void bfill_i32_256(u8* dst, i32 value)
+    {
+        #ifdef SPAN_SIMD_256
+        _mm256_storeu_si256((i256*)dst, _mm256_set1_epi32(value));
+        #else
+        bfill_i32_128(dst, value);
+        bfill_i32_128(dst + size128, value);
+        #endif
+    }
+
+
+    static inline void bfill_i32_512(u8* dst, i32 value)
+    {
+        
+        bfill_i32_256(dst, value);
+        bfill_i32_256(dst + size256, value);
+    }
+
+
+    static inline void bfill_i32_1024(u8* dst, u32 value)
+    {
+        bfill_i32_512(dst, value);
+        bfill_i32_512(dst + size512, value);
+    }
+    
 }
 
 
@@ -343,7 +332,7 @@ namespace span
 
 namespace span
 {
-    static void fill_u8_64(u8* dst, u8 value, u64 len_u8)
+    static void fill_u8_8(u8* dst, u8 value, u64 len_u8)
     {
         for (u32 i = 0; i < len_u8; i++)
         {
@@ -361,11 +350,11 @@ namespace span
 
         for (; i < end128; i += size128)
         {
-            bit_fill_u8_128(dst + i, value);
+            bfill_u8_128(dst + i, value);
         }
 
         i = len_u8 - size128;
-        bit_fill_u8_128(dst + i, value);
+        bfill_u8_128(dst + i, value);
     }    
 
 
@@ -378,11 +367,11 @@ namespace span
 
         for (; i < end256; i += size256)
         {
-            bit_fill_u8_256(dst + i, value);
+            bfill_u8_256(dst + i, value);
         }
 
         i = len_u8 - size256;
-        bit_fill_u8_256(dst + i, value);
+        bfill_u8_256(dst + i, value);
     }
 
 
@@ -395,11 +384,11 @@ namespace span
 
         for (; i < end512; i += size512)
         {
-            bit_fill_u8_512(dst + i, value);
+            bfill_u8_512(dst + i, value);
         }
 
         i = len_u8 - size512;
-        bit_fill_u8_512(dst + i, value);
+        bfill_u8_512(dst + i, value);
     }
 
 
@@ -412,11 +401,11 @@ namespace span
 
         for (; i < end1024; i += size1024)
         {
-            bit_fill_u8_1024(dst + i, value);
+            bfill_u8_1024(dst + i, value);
         }
 
         i = len_u8 - size1024;
-        bit_fill_u8_1024(dst + i, value);
+        bfill_u8_1024(dst + i, value);
     }
 }
 
@@ -425,7 +414,7 @@ namespace span
 
 namespace span
 {
-    static void fill_u32_64(u32* dst, u32 value, u64 len_u32)
+    static void fill_u32_32(u32* dst, u32 value, u64 len_u32)
     {
         for (u32 i = 0; i < len_u32; i++)
         {
@@ -448,11 +437,11 @@ namespace span
 
         for (; i < end128; i += size128)
         {
-            bit_fill_i32_128(d8 + i, ival);
+            bfill_i32_128(d8 + i, ival);
         }
 
         i = len_u8 - size128;
-        bit_fill_i32_128(d8 + i, ival);
+        bfill_i32_128(d8 + i, ival);
     }
 
 
@@ -470,11 +459,11 @@ namespace span
 
         for (; i < end256; i += size256)
         {
-            bit_fill_i32_256(d8 + i, ival);
+            bfill_i32_256(d8 + i, ival);
         }
 
         i = len_u8 - size256;
-        bit_fill_i32_256(d8 + i, ival);
+        bfill_i32_256(d8 + i, ival);
     }
 
 
@@ -492,11 +481,11 @@ namespace span
 
         for (; i < end512; i += size512)
         {
-            bit_fill_i32_512(d8 + i, ival);
+            bfill_i32_512(d8 + i, ival);
         }
 
         i = len_u8 - size512;
-        bit_fill_i32_512(d8 + i, ival);
+        bfill_i32_512(d8 + i, ival);
     }
 
 
@@ -514,13 +503,232 @@ namespace span
 
         for (; i < end1024; i += size1024)
         {
-            bit_fill_i32_1024(d8 + i, ival);
+            bfill_i32_1024(d8 + i, ival);
         }
 
         i = len_u8 - size1024;
-        bit_fill_i32_1024(d8 + i, ival);
+        bfill_i32_1024(d8 + i, ival);
     }
 
+}
+
+
+/* add */
+
+namespace span
+{
+    static void add_32(f32* a, f32* b, f32* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; i++)
+        {
+            dst[i] = a[i] + b[i];
+        }
+    }
+
+
+    static void add_128(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+
+            _mm_storeu_ps(dst + i, _mm_add_ps(va, vb));
+        }
+
+        add_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        add_32(a, b, dst, len);
+
+        #endif
+    }
+
+
+    static void add_256(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+
+            _mm256_storeu_ps(dst + i, _mm256_add_ps(va, vb));
+        }
+
+        add_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        add_128(a, b, dst, len);
+
+        #endif
+    }
+}
+
+
+/* sub */
+
+namespace span
+{
+    static void sub_32(f32* a, f32* b, f32* dst, u32 len)
+    {
+        for (u32 i = 0; i < len; i++)
+        {
+            dst[i] = a[i] - b[i];
+        }
+    }
+
+
+    static void sub_128(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+
+            _mm_storeu_ps(dst + i, _mm_sub_ps(va, vb));
+        }
+
+        sub_32(a + i, b + i, dst + i, len - i);
+
+
+        #else
+
+        sub_32(a, b, dst, len);
+
+        #endif
+    }
+
+
+    static void sub_256(f32* a, f32* b, f32* dst, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+
+            _mm256_storeu_ps(dst + i, _mm256_sub_ps(va, vb));
+        }
+
+        sub_32(a + i, b + i, dst + i, len - i);
+
+        #else
+
+        sub_128(a, b, dst, len);
+
+        #endif
+    }
+}
+
+
+/* dot */
+
+namespace span
+{
+    static f32 dot_32(f32* a, f32* b, u32 len)
+    {
+        f32 res = 0.0f;
+        for (u32 i = 0; i < len; i++)
+        {
+            res += a[i] * b[i];
+        }
+
+        return res;
+    }
+
+
+    static f32 dot_128(f32* a, f32* b, u32 len)
+    {
+        #ifdef SPAN_SIMD_128
+
+        constexpr u32 N = 4;
+        u32 L = len - (len % N);
+
+        f128 vsum = _mm_setzero_ps();
+        alignas(N * sizeof(f32)) f32 res[N];
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f128 va = _mm_loadu_ps(a + i);
+            f128 vb = _mm_loadu_ps(b + i);
+            f128 vm = _mm_mul_ps(va, vb);
+            vsum = _mm_add_ps(vsum, vm);
+        }
+
+        _mm_storeu_ps(res, vsum);
+        f32 sum = res[0] + res[1] + res[2] + res[3];
+
+        sum += dot_32(a + i, b + i, len - i);
+
+        return sum;
+
+        #else
+
+        return dot_32(a, b, len);
+
+        #endif
+    }
+
+
+    static f32 dot_256(f32* a, f32* b, u32 len)
+    {
+        #ifdef SPAN_SIMD_256
+        
+        constexpr u32 N = 8;
+        u32 L = len - (len % N);
+
+        f256 vsum = _mm256_setzero_ps();
+        alignas(N * sizeof(f32)) f32 res[N];
+
+        u32 i = 0;
+        for (i = 0; i < L; i += N)
+        {
+            f256 va = _mm256_loadu_ps(a + i);
+            f256 vb = _mm256_loadu_ps(b + i);
+            f256 vm = _mm256_mul_ps(va, vb);
+            vsum = _mm256_add_ps(vsum, vm);
+        }
+
+        _mm256_storeu_ps(res, vsum);
+        f32 sum = res[0] + res[1] + res[2] + res[3] +
+            res[4] + res[5] + res[6] + res[7];
+
+        sum += dot_32(a + i, b + i, len - i);
+
+        return sum;
+
+        #else
+
+        return dot_128(a, b, len);
+
+        #endif
+    }
 }
 
 
@@ -536,17 +744,17 @@ namespace span
         {
         case 0:
         case 1:
-            copy_64(src, dst, len_u8);
+            copy_u8_64(src, dst, len_u8);
             break;
         case 2:
         case 3:
-            copy_128(src, dst, len_u8);
+            copy_u8_128(src, dst, len_u8);
             break;
         case 4:
         case 5:
         case 6:
         case 7:
-            copy_256(src, dst, len_u8);
+            copy_u8_256(src, dst, len_u8);
             break;
         case 8:
         case 9:
@@ -556,10 +764,10 @@ namespace span
         case 13:
         case 14:
         case 15:
-            copy_512(src, dst, len_u8);
+            copy_u8_512(src, dst, len_u8);
             break;
         default:
-            copy_1024(src, dst, len_u8);
+            copy_u8_1024(src, dst, len_u8);
         }
     }
 
@@ -572,7 +780,7 @@ namespace span
         {
         case 0:
         case 1:
-            fill_u8_64(dst, value, len_u8);
+            fill_u8_8(dst, value, len_u8);
             break;
         case 2:
         case 3:
@@ -608,7 +816,7 @@ namespace span
         {
         case 0:
         case 1:
-            fill_u32_64(dst, value, len_u32);
+            fill_u32_32(dst, value, len_u32);
             break;
         case 2:
         case 3:
@@ -632,6 +840,94 @@ namespace span
             break;
         default:
             fill_u32_1024(dst, value, len_u32);
+        }
+    }
+}
+
+
+namespace span
+{
+    void add(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
+    {
+        auto len = a.length;
+
+        assert(b.length == len);
+        assert(dst.length == len);
+
+        switch (len)
+        {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            add_32(a.data, b.data, dst.data, len);
+            break;
+
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            add_128(a.data, b.data, dst.data, len);
+            break;
+
+        default: 
+            add_256(a.data, b.data, dst.data, len);
+            break;
+        }
+    }
+    
+
+    void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
+    {
+        auto len = a.length;
+
+        assert(b.length == len);
+        assert(dst.length == len);
+
+        switch (len)
+        {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            sub_32(a.data, b.data, dst.data, len);
+            break;
+
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            sub_128(a.data, b.data, dst.data, len);
+            break;
+
+        default: 
+            sub_256(a.data, b.data, dst.data, len);
+            break;
+        }
+    }
+    
+
+    f32 dot(SpanView<f32> const& a, SpanView<f32> const& b)
+    {
+        auto len = a.length;
+
+        assert(b.length == len);
+
+        switch (len)
+        {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            return dot_32(a.data, b.data, len);
+        case 4:
+        case 5:
+        case 6:
+        case 7:
+            return dot_128(a.data, b.data, len);
+
+        default: 
+            return dot_256(a.data, b.data, len);
         }
     }
 }

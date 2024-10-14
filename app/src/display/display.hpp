@@ -443,7 +443,7 @@ namespace display
         ImGui::Begin("Topology");
 
         constexpr int layer_size_min = 1;
-        constexpr int layer_size_max = 64;
+        constexpr int layer_size_max = 128;
         constexpr int layer_size_default = 16;
         
         static int n_inner_layers = layer_size_min;
@@ -492,6 +492,16 @@ namespace display
         if (is_disabled) { ImGui::EndDisabled(); }        
 
         ImGui::Text("%u", topology.get_output_size());
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Max all"))
+        {
+            for (int i = 0; i < n_inner_layers; i++)
+            {
+                inner_layers[i] = layer_size_max;
+            }
+        }
 
         topology.set_inner_layers((u32)n_inner_layers);
         

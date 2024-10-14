@@ -140,40 +140,11 @@ namespace span
 
 namespace span
 {    
-    inline void add(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
-    {
-        auto len = a.length; // == b.length == dst.length
+    void add(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst);    
 
-        for (u32 i = 0; i < len; i++)
-        {
-            dst.data[i] = a.data[i] + b.data[i];
-        }
-    }
-    
+    void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst);    
 
-    inline void sub(SpanView<f32> const& a, SpanView<f32> const& b, SpanView<f32> const& dst)
-    {
-        auto len = a.length; // == b.length == dst.length
-
-        for (u32 i = 0; i < len; i++)
-        {
-            dst.data[i] = a.data[i] - b.data[i];
-        }
-    }
-    
-
-    inline f32 dot(SpanView<f32> const& a, SpanView<f32> const& b)
-    {
-        auto len = a.length; // == b.length
-
-        f32 res = 0.0f;
-        for (u32 i = 0; i < len; i++)
-        {
-            res += a.data[i] * b.data[i];
-        }
-
-        return res;
-    }
+    f32 dot(SpanView<f32> const& a, SpanView<f32> const& b);
 }
 
 

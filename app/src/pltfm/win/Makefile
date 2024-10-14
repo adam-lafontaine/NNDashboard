@@ -1,11 +1,14 @@
 GPP := g++
 
 GPP += -std=c++20
-GPP += -mavx
 GPP += -mwindows
+GPP += -mavx
 
-#GPP += -O3
-#GPP += -DNDEBUG
+GPP += -O3
+GPP += -DNDEBUG
+GPP += -D__AVX__
+GPP += -D__AVX2__
+
 GPP += -DALLOC_COUNT
 
 # directories
